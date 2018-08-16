@@ -10,22 +10,25 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 ```{r}
 library(RUVSeq)
 library(edgeR)
+library(dplyr)
 
 source('~/Documents/GitHub/OCTAD v180627/octad_desktop/testCodes/DE_core_functions_v2.R')
 pipelineDataFolder = '~/Documents/GitHub/OCTAD v180627/Data/'
-outputFolder = '~/Documents/GitHub/OCTAD v180627/Subproject Metastatic Cancer/Breast Invasive Carcinoma/'
+outputFolder = '~/Documents/GitHub/OCTAD v180627/Subproject Metastatic Cancer/Prostate Adenocarcinoma/'
 if (!dir.exists(outputFolder)) {
   dir.create(outputFolder)
 }
 
 phenoDF = read.csv(paste0(pipelineDataFolder,'integrated.OCTAD.basic.sample.meta.csv'),stringsAsFactors = F)
-phenoDF_breast = phenoDF %>% filter(grepl('BREAST - MAMMARY',biopsy.site,ignore.case = T)|grepl('breast invasive carcinoma',cancer,ignore.case = T)) %>% filter(gender == 'Female')
-
-table(phenoDF_breast$sample.type)
+phenoDF_case = phenoDF %>% filter(grepl('Prostate Adenocarcinoma',cancer,ignore.case = T))
+phenoDF_norm = phenoDF %>% filter(grepl('prostate',biopsy.site,ignore.case = T),
+                                  data.source=='GTEX')
+phenoDF_cancer = rbind(phenoDF_case,phenoDF_norm)
+table(phenoDF_cancer$sample.type)
 ```
 
 ```{r}
-counts_phenotype <- phenoDF_breast %>% select(sample = sample.id,sample_type = sample.type)
+counts_phenotype <- phenoDF_cancer %>% select(sample = sample.id,sample_type = sample.type)
   
 #need to set the levels so that the design matrix won't be case as an intercept
 counts_phenotype$sample_type <- factor(counts_phenotype$sample_type,levels=c('normal',
@@ -37,7 +40,7 @@ counts_phenotype$sample_type <- factor(counts_phenotype$sample_type,levels=c('no
 
 ```{r}
 load(paste0(pipelineDataFolder,'dz.expr.log2.readCounts.RData'))
-dz_exprBreast = dz.expr.log2.read.count[,phenoDF_breast$sample.id]
+dz_exprBreast = dz.expr.log2.read.count[,phenoDF_cancer$sample.id]
 rm(dz.expr.log2.read.count)
 
 counts = 2^dz_exprBreast - 1
@@ -97,7 +100,7 @@ dgList <- calcNormFactors(dgList, method="TMM")
 dgList <- estimateGLMCommonDisp(dgList, design)
 dgList <- estimateGLMTagwiseDisp(dgList, design)
 fit <- glmFit(dgList, design)
-save(fit,file=paste0(outputFolder,'breastFit_Normalized_ntop5000.RData'))
+save(fit,file=paste0(outputFolder,'LiverFit_Normalized_ntop5000.RData'))
 
 
 padj_function = function(res){
@@ -136,5 +139,5 @@ geneEnrich(dz_signature.metVpri)
 
 save(lrt.adjVnorm.res,lrt.priVnorm.res,lrt.metVnorm.res,lrt.metVpri.res,
      dz_signature.adjVnorm,dz_signature.priVnorm,dz_signature.metVnorm,dz_signature.metVpri,
-     file=paste0(outputFolder,'DEsigBreast.by_sampletype_normalized.RData'))
+     file=paste0(outputFolder,'DEsigLiverHCC.by_sampletype_normalized.RData'))
 ```
