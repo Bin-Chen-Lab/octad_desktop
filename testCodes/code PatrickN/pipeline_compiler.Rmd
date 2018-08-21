@@ -1,0 +1,521 @@
+---
+title: "Demo"
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+
+Change base.folder to wherever you put "desktop_pipeline/" or "octad_desktop-master/" (depending on version)
+Nothing else in this block needs to be changed.
+```{r setup, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+start.time <- Sys.time() # Start Time of analysis.
+
+base.folder <- '/Users/newburyp/Documents/Chen Lab/Projects/desktop_pipeline/' # Set base.folder as '/[your_path]/desktop_pipeline/'
+setwd(base.folder)
+library(dplyr)
+library(ggplot2)
+library("RUVSeq")
+library("GSVA")
+library(compiler)
+# library(doParallel)
+library(data.table)
+# library(svMisc)
+# library(doSNOW)
+# 
+# cl <- makeCluster(2) 
+# registerDoSNOW(cl)
+
+# next 3 lines are for doParallel (instead of doSNOW)
+# cores=detectCores()
+# cl <- makeCluster(cores[1]-1) #not to overload your computer
+# registerDoParallel(cl)
+
+enableJIT(3)
+
+
+iteration = 1 # don't touch this. Below automatically increases with each iteration.
+for (i in 1:length(dir(normalizePath('./results/')))) {
+if (dir.exists(paste0(normalizePath(paste0('./results/results_',Sys.Date(),'_',i,'/')),'/'))==TRUE) 
+  iteration = iteration + 1
+}
+
+outputFolder = paste0(normalizePath(paste0('./results/results_',Sys.Date(),'_',iteration,'/')),'/')
+if (!dir.exists(outputFolder)) {
+  dir.create(outputFolder)
+}
+outputFolder = paste0(normalizePath(paste0('./results/results_',Sys.Date(),'_',iteration,'/')),'/')
+pipelineDataFolder = paste0(normalizePath('./data/'),'/')
+WebPortalCodeFolder = paste0(normalizePath('./code/'),'/')
+
+
+merged_gene_info <- fread(paste0(pipelineDataFolder,"merged_ensembl_geneinfo.csv"), stringsAsFactors = TRUE)
+ensembl_info <- fread(paste0(pipelineDataFolder,'/gencode.v23.annotation.gene.probeMap.csv'),
+                         stringsAsFactors = F)
+
+source(paste0(WebPortalCodeFolder,'DE_core_functions.R'))
+#has functions which compute ref tissue given case_id strings, normal_id strings, and the df that contains them both as colnames
+#expSet is a counts dataframe that contains both case and normal counts. 
+```
+
+You will normalize samples for batch effects with package "RUVSeq". You can set it off by changing set parameters script.   
+Set parameters. Below are default settings. 
+You can set normalize_samples = F to make it run faster at risk of batch effects.  
+```{r parameters}
+# DE params:
+normalize_samples = T # default T
+k = 1 # default 1
+n_topGenes = 10000 # default 10000
+DE_method = 'edgeR' # Default 'edgeR' ... Other choice is 'limma'
+
+
+# disease signature params:
+log2fchange <- 1 # the cutoff for "significant gene impact". Default = 1, so any DE gene with log2foldchange < 1 will be omitted. Improved results with 2.
+padjusted <- 0.001 # the cutoff for "significant genes". Default = 0.001, so any DE genes with padj > 0.001 will be omitted.
+
+
+# sRGES params:
+# Only mess with "max_gene_size", which is how many up-regulated genes and down-regulated genes are allowed. ("100" = 100up + 100down = 200 total)
+landmark = 1 # default 1
+choose_fda_drugs = F # default F
+max_gene_size = 100 # default 100
+weight_cell_line = F # default F
+
+# additionally, you can change control_size in block case.load6, which decides how many control samples you will choose.
+
+# logging parameters
+write('x', file = paste0(outputFolder,"parameters.txt"))
+fileConn<-file(paste0(outputFolder,"parameters.txt"))
+writeLines(c("Normalization Parameters:","normalize_samples",normalize_samples,"","k",k,"","n_topGenes",n_topGenes,"","DE_method",DE_method,"","--------------------------","","Disease Signature Parameters:","log2fchange",log2fchange,"","padjusted",padjusted,"","--------------------------","","sRGES Parameters:","landmark",landmark,"","choose_fda_drugs",choose_fda_drugs,"","max_gene_size",max_gene_size,"","weight_cell_line",weight_cell_line), fileConn)
+close(fileConn)
+
+```
+
+Have the following **5** files in your pipelineDataFolder:
+
+* integrated.OCTAD.basic.sample.meta.csv [phenotype data]
+* dz.expr.log2.readCounts.demo.RData (demo) or dz.expr.log2.readCounts.RData (full set) [expression data]    
+* gencode.v23.annotation.gene.probeMap.csv [features data]   
+* Gene_info_hs.csv [features data2]      
+* merged_ensembl_geneinfo.csv [merged above 2]
+```{r pipelineDataFolder, results='hide'}
+dir(pipelineDataFolder) # check to make sure you have these files
+```
+***
+
+Have the following **8** scripts in your WebPortalCodeFolder:
+* DE_core_functions.R  
+* Diff_Exp.R  
+* drug_enrichment_analysis.R  
+* drugs_core_functions.R  
+* gene_enrichment_analysis.R  
+* runRGES_dz_arrangeMax.R (or runRGES_dz_arrangeMax_compiler.R depending on version)  
+* tnse_2d_5000varGenes.RData  <-- I don't have this :o  
+* visualize_drug_hits.R  
+```{r WebPortalCodeFolder}
+dir(WebPortalCodeFolder) # check to make sure you have these files
+```
+***
+
+Load the dataframes that contain your case and normal reference tissues.  
+DO NOT VIEW these dataframes as they are very large. Use the colnames, rownames, and dim functions. Otherwise, you may crash.
+```{r data.load}
+data.load.start <- Sys.time()
+load(paste0(pipelineDataFolder,'dz.expr.log2.readCounts.RData')) 
+#File dz.expr.log2.readCounts.demo.RData will give you mRNA counts. 
+#the expression dataframe table is called dz.expr.log2.read.count.demo 
+
+phenoDF = read.csv(paste0(pipelineDataFolder,'integrated.OCTAD.basic.sample.meta.csv'),stringsAsFactors = F)
+#File integrated.OCTAD.basic.sample.meta.csv consist of sample ID, cancer location, and data source, etc.  
+#the phenotype dataframe is called phenoDF 
+
+# tcga.clin.data <- readxl::read_xlsx("/Users/newburyp/Documents/Chen Lab/Projects/melanoma/data/TCGA-CDR-SupplementalTableS1.xlsx", sheet = "TCGA-CDR")
+# phenoDF$sample.id.base <- sub("-[^-]+$","",phenoDF$sample.id)
+# 
+# phenoDF <- merge(phenoDF, tcga.clin.data, by.x="sample.id.base",by.y="bcr_patient_barcode", all.x=TRUE)
+# 
+# exp.pheno.all <- merge(all.mitf.pheno, phenoDF, by.x="Row.names",by.y="sample.id")
+
+data.load.end <- Sys.time()
+data.load.time <- data.load.end - data.load.start
+data.load.time
+```
+***
+
+##Select Cases##    
+```{r case.load1}
+# commented lines here and in block case.load3 are useful if your control site has many different subtypes (like GTEX 'SKIN' samples)
+
+case.load.start <- Sys.time()
+# condinfo <- grep('^SKIN',phenoDF$biopsy.site)
+# skin.samples <- phenoDF$sample.id[condinfo]
+phenoDF_case <- phenoDF %>% 
+  filter(cancer == 'Brain Lower Grade Glioma',
+         sample.type %in% c('primary'))
+# gtexskinids <- (phenoDF %>% filter(cancer == 'normal',sample.id %in% skin.samples))$sample.id
+# all.samples <- c(unlist(tcgaskinids), unlist(gtexskinids))
+# phenoDF_skin <- phenoDF[phenoDF$sample.id %in% all.samples,]
+
+```
+***  
+
+Create a list with sample IDs for the cancer of interest (case). 
+```{r case.load2}
+case_id <- phenoDF_case$sample.id
+```
+Results: **`r nrow(phenoDF_case)`** case IDs.  
+***
+
+##Select Reference Control Samples##  
+***
+Identify the sample.id of normal tissues in the phenoDF. They should be from the GTEX database and contain "GTEX..." in the start of the sample ID name.
+```{r case.load3}
+normal_id = (phenoDF %>% filter(data.source == 'GTEX'))$sample.id 
+# normal_id = (phenoDF %>% filter(sample.type == 'normal'))$sample.id
+# all.mitf <- subset(df,rownames(df) %in% all.samples)
+# all.mitf.pheno <- merge(x=all.mitf,y=phenoDF[,c('sample.id','sample.type','biopsy.site')],by.x="row.names",by.y="sample.id", allx=TRUE)
+# I may want to edit this in the future to either be sample.type == 'normal' or to additionally include adjacent samples.
+```
+***
+
+Define normal and case counts. Combine the normal and case counts by generating a table called dz_expr containing columns of normal and case sample IDs vs rows of genes. 
+```{r case.load4}
+normal_counts = dz.expr.log2.read.count[,normal_id]  
+case_counts = dz.expr.log2.read.count[,case_id]
+
+rm(dz.expr.log2.read.count) # free up some memory
+
+(row.names(case_counts) == row.names(normal_counts)) %>% sum()
+#quick check to see that all genes match up before combining  
+
+dz_expr = cbind(normal_counts, case_counts)
+
+rm(normal_counts, case_counts) # free up some memory
+
+dim(dz_expr)
+```
+Results: **`r nrow(dz_expr)`** rows of genes vs **`r ncol(dz_expr)`** total columns of combined **`r nrow(phenoDF %>% filter(data.source == 'GTEX'))`** normal and **`r nrow(phenoDF_case)`** case samples  
+
+***
+
+Define your control ID--the control samples you are comparing your case with. The computeRefTussue function will match similar normal samples to your chosen cancer.  This function is based on mRNA data of high varying expression across all tissues.  
+You will generate **50** control samples, unless you state a different control_size.
+```{r case.load6}
+control_id <- computeRefTissue(case_id = case_id,
+                               normal_id = normal_id,
+                               expSet = dz_expr,
+                               control_size = 50) 
+head(control_id)
+#this function will also generate a csv called case_normal_median_cor.csv that includes the median correlation of each normal sample.
+case.load.end <- Sys.time()
+
+case.load.time <- case.load.end - case.load.start
+case.load.time
+```
+***
+
+Check the tissue location of where the control samples are from.
+```{r verify1}
+(phenoDF %>% filter(sample.id %in% control_id) %>% select(biopsy.site) %>% table())
+```
+
+***
+
+##Visualization of Case Vs. Reference Samples##  
+***
+
+To see how similar the controls are to the case samples, get the correlations of mRNA expressions between each of the normal samples and the set of cases. The list is in descending order.
+```{r verify2}
+normal_median_cor = read.csv(paste0(outputFolder,'case_normal_median_cor.csv'),stringsAsFactors = F)
+normal_median_cor <- normal_median_cor %>% arrange(desc(cor))
+
+normal_median_cor <-left_join(normal_median_cor, 
+  phenoDF %>% select(sample.id, biopsy.site), 
+  by = "sample.id")
+
+head(normal_median_cor)
+```
+***
+
+Goal is to sort the correlation order based on tissue type.  
+***
+
+I) Find median correlation for each primary site
+```{r verify3}
+(reference_tissue_rank <- normal_median_cor %>% 
+  group_by(biopsy.site) %>% summarise(medianCor = median(cor)) %>% 
+  ungroup())
+```
+
+II) Sort the median correlation of the different tissues from high to low
+```{r verify4}
+(top_refs = reference_tissue_rank %>% arrange(desc(medianCor)))
+#top_refs <-  reference_tissue_rank[1:10, 1]
+```
+
+III) Sort tissue from high to low correlation. Top ten shown.
+```{r verify5}
+normal_median_cor$ref <- factor(normal_median_cor$biopsy.site, levels = top_refs$biopsy.site)
+levels(normal_median_cor$ref)[1:10]
+```
+
+IV) Graph tissue type vs mRNA correlation
+```{r fig1, fig.height=9, fig.align= "center"}
+
+p <- ggplot(normal_median_cor, aes(ref, cor))
+p +   geom_boxplot(color='grey', notch=F, outlier.shape = NA) + 
+  geom_jitter(aes(alpha=1/100), show.legend = F) + 
+  theme_bw() + 
+  ylab("correlation") + 
+  xlab("") + 
+  labs (title='Correlation between Case Samples and Reference Tissue',caption='OCTAD')+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 11),
+  axis.text.y = element_text(size = 11), axis.title = element_text(size = 11), 
+  plot.margin = margin(l=0))
+
+ggsave('correlation graph.pdf', paper='a4r', path=outputFolder)
+```
+
+##Visualize on Cancer Map##
+This is optional.
+```{r cancermap, fig.height=10, fig.align= "center"}
+
+#tsne = read.csv(paste0(pipelineDataFolder,"tsne_2d_5000varGenes.csv"), stringsAsFactors = F)
+
+#pheno_id_cancer <- phenoDF %>% select (sample.id, cancer)
+#tsne <- left_join (tsne, pheno_id_cancer, by = "sample.id")
+
+#make a new column called type to state case, control, or others
+#tsne$type <- "others"
+#tsne$type[tsne$sample.id %in% case_id] <- "case"
+#tsne$type[tsne$sample.id %in% control_id] <- "control"
+
+#plot 
+#(p2 <- ggplot(tsne, aes(X, Y, color = type)) + geom_point(alpha = 0.4)+
+#    labs(title = paste ('TNSE PLOT'), x= 'TSNE Dim1', y='TSNE Dim2', caption="OCTAD"))
+
+#ggsave("case_control_map.pdf", path=outputFolder)
+```
+
+##Optional: Selecting Another Set of Reference Samples##  
+***
+```{r referencesample2}
+#2a. select normals based on the top site computed e.g. if brain was top site select all brain as controls
+#2b. select normals based on the top primary site
+  #note there are subtypes of which brain sites are there
+  #instead of all brain sites we can select the part with highest correlation
+    #e.g. cortex, medulla etc...
+#2c. change the graph to plot more specific sites mentioned in 2b. 
+
+#rm(p,normal_median_cor,phenoDF,phenoDF_case,reference_tissue_rank,top_refs) before selecting another set.
+```
+***
+
+##Run Differential Expressions##  
+
+Variables needed:  
+
+* case_id : samples IDs of case tissues in a character vector
+* control_id : samples IDs of control tissues in a character vector
+* dz_expr : dataframe that contains both case_id and control_id in its column names, 
+* outputFolder : folder to place output files
+
+***
+
+Read csv with gene information and read Diff_Exp.R script.  
+This will output 3 files: "computedEmpGenes.csv", "DE_genes.csv", and  "highExpGenes.csv".  
+```{r DE2, message=FALSE, warning=FALSE}
+
+DE.start <- Sys.time()
+
+source(paste0(WebPortalCodeFolder,'Diff_Exp.R'))
+
+DE.end <- Sys.time()
+DE.time <- DE.end - DE.start
+DE.time
+```
+***
+
+##Disease Signature##  
+***  
+
+Get the disease signature.
+```{r dz_signature}
+dz_signature <- res %>% filter(padj < padjusted, abs(log2FoldChange)>log2fchange)
+#filter out res df to get dz sigs
+#Term res refers to the results table that is generated from the Diff_Exp. R script.
+dim(dz_signature)
+head(dz_signature)
+```
+***
+
+Combine the res table with the Ensembl table to generate a differential expression results table with gene information.
+```{r res_geneinfo}
+res_geneinfo <- left_join(res, merged_gene_info, by=c('identifier'='ensembl'))
+
+write.csv(res_geneinfo,file=paste0(outputFolder,'res_geneinfo.csv'))
+```
+***
+
+Generate table for disease signature
+```{r dz_signature2}
+dz_signature <- dz_signature %>% left_join(ensembl_info %>% select(gene,ensembl,chrom,strand),
+                                           by=c('identifier'='ensembl'))
+dim(dz_signature)
+head(dz_signature)
+
+
+#the column name may differ between different metadata but you need Symbol to join with RGES
+dz_signature$Symbol <- toupper(dz_signature$gene)
+str(dz_signature$Symbol)
+
+
+write.csv(dz_signature, paste0(outputFolder, "/dz_signature.csv"),row.names = F)
+```
+***
+
+##Affected Pathways and Potential Drugs for Reversal##  
+***
+Find potential drugs that may reverse disease signature.  Takes at least 10mins to run following chunk. Following scripts will output "all_lincs_score.csv"" and "sRGES.csv".  
+File all_lincs_score.csv has the RGES (reversal gene expression score), which is needed for the gene_enrichment_analysis script later.    
+File sRGES.csv is the summarized RGES.
+```{r sRGES}
+sRGES.start <- Sys.time()
+source(paste0(WebPortalCodeFolder,'drugs_core_functions.R'))
+#functions needed to run RGES
+source(paste0(WebPortalCodeFolder,'runRGES_dz_arrangeMax_compiler.R'))
+sRGES.end <- Sys.time()
+sRGES.time <- sRGES.end - sRGES.start
+sRGES.time
+```
+***
+
+See which pathways are affected by running following code. This results the up-regulated pathways as "dz_up_sig_genes_enriched.csv" and the down-regulated pathways as "dz_dn_sig_genes_enriched.csv". 
+```{r GEA}
+source(paste0(WebPortalCodeFolder,'gene_enrichment_analysis.R'))
+```
+***
+
+Ouput the "lincs_reverse_expression.pdf' containing a heatmap showing drug hits and their effects on mRNA expression.
+```{r VisualizeDrugHits, message=FALSE, warning=FALSE}
+source(paste0(WebPortalCodeFolder,'visualize_drug_hits.R'))
+```
+***
+
+##Drug Enrichment Analysis##
+Additional files are needed here, depending on target_type.  
+Each of the target_type will create a pdf and a csv file. 
+
+* cmpd_sets_chembl_target.RData  
+* cmpd_sets_mesh.RData  
+* cmpd_sets_meshes.RData  
+* cmpd_sets_sea_targets.RData    
+
+The following three chunks are either both FDA-approved and not, FDA-approved only, or not FDA-approved. These chunks can take over 30min to run.
+
+***  
+1) for all results--both FDA-approved and not.  
+```{r eval=FALSE}
+Sys.time()
+source(paste0(WebPortalCodeFolder,'drugs_core_functions.R'))
+targets = c('chembl_targets','mesh','meshes','sea_targets')
+
+for (target_type in targets){
+  load(paste0(pipelineDataFolder,"cmpd_sets_", target_type, ".RData"))
+  cmpdSets = cmpd_sets$cmpd.sets
+  sRGES = read.csv(paste0(outputFolder,'/sRGES.csv'),stringsAsFactors = F)
+  
+  gsea_p = drug_enrichment(sRGES=sRGES,target_type=target_type)
+  write.csv(gsea_p, paste0(outputFolder, "/enriched_sRGES_all", target_type, ".csv"))
+  top_target = gsea_p$target[1]
+  sRGES$rank = rank(-sRGES$sRGES)
+  target_drugs_score = sRGES$rank[sRGES$pert_iname %in% cmpdSets[[top_target]]]
+  pdf(paste0(outputFolder, "/top_enriched_sRGES_all_", target_type, ".pdf"))
+  limma::barcodeplot(sRGES$sRGES, target_drugs_score, main = top_target, xlab = "sRGES")
+  dev.off()
+}
+```
+
+2) OPTIONAL for FDA-approved only 
+Can Modify within the forloop
+-filter drugs for sRGES that you're interested in 
+```{r eval=FALSE}
+Sys.time()
+source(paste0(WebPortalCodeFolder,'drugs_core_functions.R'))
+targets = c('chembl_targets','mesh','meshes','sea_targets')
+
+for (target_type in targets){
+  load(paste0(pipelineDataFolder,"cmpd_sets_", target_type, ".RData"))
+  cmpdSets = cmpd_sets$cmpd.sets
+  fda_only <- read.csv(paste0(pipelineDataFolder,'LINCS_RGES/repurposing_drugs_20170327.txt'),skip=9,
+                     sep='\t')
+  sRGES = read.csv(paste0(outputFolder,'/sRGES.csv'),stringsAsFactors = F)
+  sRGES = sRGES %>% filter (pert_iname %in% fda_only$pert_iname) %>% 
+    left_join(fda_only,by='pert_iname')
+
+  gsea_p = drug_enrichment(sRGES=sRGES,target_type=target_type)
+  write.csv(gsea_p, paste0(outputFolder, "/enriched_sRGES_fda_only_", target_type, ".csv"))
+  top_target = gsea_p$target[1]
+  sRGES$rank = rank(-sRGES$sRGES)
+  target_drugs_score = sRGES$rank[sRGES$pert_iname %in% cmpdSets[[top_target]]]
+  pdf(paste0(outputFolder, "/top_enriched_sRGES_fda_only_", target_type, ".pdf"))
+  limma::barcodeplot(sRGES$sRGES, target_drugs_score, main = top_target, xlab = "sRGES")
+  dev.off()
+}
+```
+*** 
+
+3) OPTIONAL for non-FDA-approved
+```{r eval=FALSE}
+Sys.time()
+source(paste0(WebPortalCodeFolder,'drugs_core_functions.R'))
+targets = c('chembl_targets','mesh','meshes','sea_targets')
+
+for (target_type in targets){
+  load(paste0(pipelineDataFolder,"cmpd_sets_", target_type, ".RData"))
+  cmpdSets = cmpd_sets$cmpd.sets
+  nonfda <- read.csv(paste0(pipelineDataFolder,'LINCS_RGES/repurposing_drugs_20170327.txt'),skip=9,
+                     sep='\t')
+  sRGES = read.csv(paste0(outputFolder,'/sRGES.csv'),stringsAsFactors = F)
+  sRGES = sRGES %>% filter (!(pert_iname %in% fda_only$pert_iname))
+
+  gsea_p = drug_enrichment(sRGES=sRGES,target_type=target_type)
+  write.csv(gsea_p, paste0(outputFolder, "/enriched_sRGES_nonfda_", target_type, ".csv"))
+  top_target = gsea_p$target[1]
+  sRGES$rank = rank(-sRGES$sRGES)
+  target_drugs_score = sRGES$rank[sRGES$pert_iname %in% cmpdSets[[top_target]]]
+  pdf(paste0(outputFolder, "/top_enriched_sRGES_nonfda_", target_type, ".pdf"))
+  limma::barcodeplot(sRGES$sRGES, target_drugs_score, main = top_target, xlab = "sRGES")
+  dev.off()
+}
+```
+***  
+
+##Platform and packages used in analysis##
+```{r sessioninfo}
+library(devtools)
+session_info()
+```
+***
+
+End Time
+```{r time}
+end.time <- Sys.time()
+
+total.time <- end.time - start.time
+total.time
+```
+
+```{r logtime}
+write('x', file = paste0(outputFolder,"time_log.txt"))
+fileConn<-file(paste0(outputFolder,"time_log.txt"))
+writeLines(c("Time Log (in minutes or seconds)","","Total Time",total.time,"","Data Load Time", data.load.time,"","control_id time",case.load.time,"","DE Time",DE.time,"","sRGES Time",sRGES.time), fileConn)
+close(fileConn)
+```
+
+```
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
