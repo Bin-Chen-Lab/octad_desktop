@@ -35,10 +35,7 @@ library("ggplot2")
 ####parameters####
 #store these parameters somewhere if you are doing multiple runs for comparison
 #default parameters
-landmark = 1
-choose_fda_drugs = F
-max_gene_size = 100
-weight_cell_line = F
+
 #load dz_signature
 #load output folder
 #load LINCS drug gene expression profiles
