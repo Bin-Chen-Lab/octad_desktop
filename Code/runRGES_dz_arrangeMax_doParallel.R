@@ -34,11 +34,6 @@ library("ggplot2")
 
 ####parameters####
 #store these parameters somewhere if you are doing multiple runs for comparison
-#default parameters
-landmark = 1
-choose_fda_drugs = F
-max_gene_size = 100
-weight_cell_line = F
 #load dz_signature
 #load output folder
 #load LINCS drug gene expression profiles
@@ -57,10 +52,10 @@ if (landmark == 1){
 }
 
 #write paths
-output_path <- paste0(outputFolder, "/all_lincs_score.csv")
-sRGES_output_path <- paste0(outputFolder, "/sRGES.csv")
-sRGES_output_path_drug <- paste0(outputFolder, "/sRGES_drug.csv")
-dz_sig_output_path <- paste0(outputFolder, "/dz_sig_used.csv")
+output_path <- paste0(outputFolder, "/all_lincs_score",suffix,".csv")
+sRGES_output_path <- paste0(outputFolder, "/sRGES",suffix,".csv")
+sRGES_output_path_drug <- paste0(outputFolder, "/sRGES_drug",suffix,".csv")
+dz_sig_output_path <- paste0(outputFolder, "/dz_sig_used",suffix,".csv")
 
 
 lincs_sig_info <- read.csv(paste0(pipelineDataFolder,"/LINCS_RGES/lincs_sig_info.csv"))
@@ -125,11 +120,11 @@ dz_cmap_scores = foreach(exp_id = sig.ids,.combine = 'c')%dopar%{
 
 #random scores
 N_PERMUTATIONS <- 10000 #default 100000
-random_sig_ids <- sample(1:ncol(lincs_signatures),N_PERMUTATIONS,replace=T)
+random_sig_ids <- sample(colnames(lincs_signatures),N_PERMUTATIONS,replace=T)
 count <- 0
 #random_cmap_scores <- NULL
 
-random_cmap_scores = foreach(expr_id = random_sig_ids,.combine = 'c')%dopar%{
+random_cmap_scores = foreach(exp_id = random_sig_ids,.combine = 'c')%dopar%{
   count <- count + 1
   #print(count)
   cmap_exp_signature <- data.frame(gene.list,  rank(-1 * lincs_signatures[, as.character(exp_id)], ties.method="random"))    
@@ -140,7 +135,6 @@ random_cmap_scores = foreach(expr_id = random_sig_ids,.combine = 'c')%dopar%{
   rand_dz_gene_down <- data.frame(GeneID=random_input_signature_genes[(nrow(dz_genes_up)+1):length(random_input_signature_genes)])
   cmap_score_new(rand_dz_gene_up,rand_dz_gene_down,cmap_exp_signature)
 }
-
 p <- sapply(dz_cmap_scores, function(score){
   sum(random_cmap_scores < score)/length(random_cmap_scores)
 })
