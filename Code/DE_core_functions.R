@@ -91,7 +91,6 @@ compEmpContGenes <- function(counts, counts_phenotype, n_topGenes = 5000){
   empirical <- rownames(set)[i]
   empirical
 }
-dz_signature = dzsig.recVnor %>% filter(abs(log2FoldChange)>0,padj<0.001)
 geneEnrich <- function(dz_signature, 
                        db.list=c( "KEGG_2016",  "GO_Biological_Process_2017", "GO_Cellular_Component_2017"),
                        suffix=''){
