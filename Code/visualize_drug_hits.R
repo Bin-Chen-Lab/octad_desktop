@@ -5,10 +5,6 @@ library("gplots")
 library("ggplot2")
 library("RColorBrewer")
 
-#CMAP score output
-#pipelineDataFolder = '~/Desktop/OCTAD/Data/'
-#outputFolder = '~/Desktop/OCTAD/Clone 3 - OCTAD v180627 code and data/pipeline output3/'
-
 lincs_drug_prediction = read.csv(paste(outputFolder, "/all_lincs_score.csv", sep=""),stringsAsFactors = F)
 dz_gene_ids = read.csv(paste(outputFolder, "/dz_sig_used.csv", sep=""),stringsAsFactors = F)
 

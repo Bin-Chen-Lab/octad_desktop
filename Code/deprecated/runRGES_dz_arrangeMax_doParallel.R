@@ -118,7 +118,7 @@ dz_cmap_scores = foreach(exp_id = sig.ids,.combine = 'c')%dopar%{
 
 
 
-#random scores
+####random scores####
 N_PERMUTATIONS <- 10000 #default 100000
 random_sig_ids <- sample(colnames(lincs_signatures),N_PERMUTATIONS,replace=T)
 count <- 0
