@@ -92,16 +92,17 @@ getsRGES <- function(RGES, cor, pert_dose, pert_time, diff, max_cor){
   return(sRGES * cor/max_cor) #
 }
 
-computeLINCSrges = function(dz_signature,choose_fda = T,parallel = T){
+computeLINCSrges = function(dz_signature,choose_fda = F,parallel = F,maxGenes=900){
+  require(dplyr)
   load(paste0(pipelineDataFolder,'/LINCS_RGES/lincs_signatures_cmpd_landmark_symbol.RData'))
   gene.list <- toupper(rownames(lincs_signatures))
   dz_sigUsed <- dz_signature %>% filter(toupper(Symbol) %in% gene.list)
-  write.csv(dz_sigUsed, paste0(outputFolder,'dz_sig_used.csv'))
-  dz_genes_up <- dz_sigUsed %>% filter(log2FoldChange>0) %>% arrange(desc(log2FoldChange))
-  dz_genes_down <- dz_sigUsed %>% filter(log2FoldChange<0) %>% arrange(log2FoldChange)
-  
+  dz_genes_up <- dz_sigUsed %>% filter(log2FoldChange>0) %>% arrange(desc(log2FoldChange)) %>% head(maxGenes)
+  dz_genes_down <- dz_sigUsed %>% filter(log2FoldChange<0) %>% arrange(log2FoldChange) %>% head(maxGenes)
+  write.csv(rbind(dz_genes_up,dz_genes_down), paste0(outputFolder,'dz_sig_used.csv'))
   lincs_sig_info <- read.csv(paste0(pipelineDataFolder,"/LINCS_RGES/lincs_sig_info.csv"),
                              stringsAsFactors = F)
+  lincs_sig_info <- lincs_sig_info %>% filter(id %in% colnames(lincs_signatures))
   if(choose_fda == T){
     fda_drugs = read.csv(paste0(pipelineDataFolder,"LINCS_RGES/repurposing_drugs_20170327.csv"),
                          comment.char = "!", header=T, sep="\t")
@@ -147,8 +148,8 @@ computeLINCSrges = function(dz_signature,choose_fda = T,parallel = T){
 summarizeLincsRGES = function(lincs_rges,
                               weight_cell_line = F,
                               cell_lines = '',
-                              choose_fda = T,
-                              parallel = T){
+                              choose_fda = F,
+                              parallel = F){
   lincs_drug_prediction = lincs_rges
   lincs_drug_prediction_subset <- subset(lincs_drug_prediction,  pert_dose > 0 & pert_time %in% c(6, 24))
   lincs_drug_prediction_pairs <- merge(lincs_drug_prediction_subset, lincs_drug_prediction_subset, by=c("pert_iname", "cell_id")) 
