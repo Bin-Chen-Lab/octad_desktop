@@ -244,6 +244,7 @@ computeRandomLincsRGES = function(dz_signature,choose_fda = T,parallel = T,n_per
 
 
 
+
 drug_enrichment <- function(sRGES,target_type){
   require(GSVA)
   load(paste0(pipelineDataFolder,"cmpd_sets_", target_type, ".RData"))
@@ -251,12 +252,6 @@ drug_enrichment <- function(sRGES,target_type){
   names(cmpdSets) = cmpd_sets$cmpd.set.names
   
   drug_pred = sRGES
-  #drug_pred = read.csv(paste0("~/Documents/stanford/tumor_cell_line/RGES_manuscript/release/data/LIHC/lincs_cancer_sRGES.csv"))
-  
-  #FDA approved using repurposing_drugs_20170327.txt
-  
-  
-  
   #create a random gene set
   random_times = 1000
   rgess = matrix(NA, nrow = nrow(drug_pred), ncol = random_times)
@@ -267,15 +262,20 @@ drug_enrichment <- function(sRGES,target_type){
   rgess = cbind(rgess, drug_pred$sRGES)
   
   gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8)
+  gsea_summary = data.frame(score = gsea_results[,101])
   
-  gsea_p = apply(gsea_results, 1, function(x){
-    sum(x[1:random_times] > x[random_times+1])/random_times
+  #p_value: test bootstrapped random scores that are less than the actual score
+  gsea_summary$p = apply(gsea_results, 1, function(x){
+    sum(x[1:random_times] < x[random_times+1])/random_times
   })
   
-  gsea_p = data.frame(target = names(gsea_p), p = gsea_p, padj = p.adjust(gsea_p))
-  gsea_p = gsea_p[order(gsea_p$p), ]
-  return(gsea_p)
+  gsea_summary$target = row.names(gsea_summary)
+  gsea_summary$padj = p.adjust(gsea_summary$p)
+  gsea_summary = gsea_summary[,c('target','score','p','padj')]
+  gsea_summary = gsea_summary[order(gsea_summary$p), ]
+  return(gsea_summary)
 }
+
 
 visualizeLincsHits = function(rges,dz_sigUsed,drugs=''){
   require(pheatmap)
