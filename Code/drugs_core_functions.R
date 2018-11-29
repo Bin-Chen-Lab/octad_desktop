@@ -262,7 +262,7 @@ drug_enrichment <- function(sRGES,target_type){
   rgess = cbind(rgess, drug_pred$sRGES)
   
   gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8)
-  gsea_summary = data.frame(score = gsea_results[,101])
+  gsea_summary = data.frame(score = gsea_results[,random_times+1])
   
   #p_value: test bootstrapped random scores that are less than the actual score
   gsea_summary$p = apply(gsea_results, 1, function(x){
