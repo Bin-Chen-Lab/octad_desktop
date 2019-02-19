@@ -94,7 +94,7 @@ getsRGES <- function(RGES, cor, pert_dose, pert_time, diff, max_cor){
 
 computeLINCSrges = function(dz_signature,choose_fda = F,parallel = F,maxGenes=900){
   require(dplyr)
-  load(paste0(pipelineDataFolder,'/LINCS_RGES/lincs_signatures_cmpd_landmark_symbol.RData'))
+  load(paste0(pipelineDataFolder,'LINCS_RGES/lincs_signatures_cmpd_landmark_symbol.RData'))
   gene.list <- toupper(rownames(lincs_signatures))
   dz_sigUsed <- dz_signature %>% filter(toupper(Symbol) %in% gene.list)
   dz_genes_up <- dz_sigUsed %>% filter(log2FoldChange>0) %>% arrange(desc(log2FoldChange)) %>% head(maxGenes)
@@ -113,7 +113,8 @@ computeLINCSrges = function(dz_signature,choose_fda = F,parallel = F,maxGenes=90
   sig.ids <- lincs_sig_info$id
   if(parallel == T){
     require(doParallel)
-    registerDoParallel(cores=4)
+    registerDoParallel(cores=2)
+    print('test')
     dz_cmap_scores = foreach(exp_id = sig.ids,.combine = 'c')%dopar%{
       cmap_exp_signature <- data.frame(gene.list,  
                                        rank(-1 * lincs_signatures[, as.character(exp_id)], 
@@ -122,23 +123,25 @@ computeLINCSrges = function(dz_signature,choose_fda = F,parallel = F,maxGenes=90
       #runs a function cmap_score_new from drugs_core_functions.R
       cmap_score_new(dz_genes_up$Symbol,dz_genes_down$Symbol,
                      cmap_exp_signature)
-      
-    }    
-  }else{
-    dz_cmap_scores <- NULL
+    }
+    dz_cmap_scores = data.frame(id = sig.ids,cmap_score = dz_cmap_scores)
+  }
+  else{
+    dz_cmap_scores <- data.frame(matrix(ncol = 2,nrow = 0))
+    colnames(dz_cmap_scores) = c('id','cmap_score')
     for (exp_id in sig.ids){
       cmap_exp_signature <- data.frame(gene.list,  
                                        rank(-1 * lincs_signatures[, as.character(exp_id)], 
                                             ties.method="random"))    
       colnames(cmap_exp_signature) <- c("ids","rank")
-      #runs a function cmap_score_new from drugs_core_functions.R
-      dz_cmap_scores <- c(dz_cmap_scores, 
-                          cmap_score_new(dz_genes_up$Symbol,dz_genes_down$Symbol,
+      tmpDF = data.frame(id = exp_id, 
+                        cmap_score = cmap_score_new(dz_genes_up$Symbol,dz_genes_down$Symbol,
                                          cmap_exp_signature))
+      dz_cmap_scores = rbind(dz_cmap_scores,tmpDF)
     }
   }
-  results <- data.frame(id = sig.ids, cmap_score = dz_cmap_scores)
-  results <- merge(results, lincs_sig_info, by = "id")
+  #results <- data.frame(id = sig.ids, cmap_score = dz_cmap_scores)
+  results <- left_join(dz_cmap_scores, lincs_sig_info, by = "id")
   results <- results[order(results$cmap_score),] 
   return(results)
 }
@@ -331,4 +334,113 @@ visualizeLincsHits = function(rges,dz_sigUsed,drugs=''){
        labels = c( dz,as.character(drug_names)),col=axiscolor, srt = 45, pos=2,offset=0.05, xpd = TRUE, cex=0.6)
   dev.off()
 }
+
+summarizeCMAPRGES = function(cmap_rges,
+                             weight_cell_line = F,
+                             cell_lines = '',
+                             choose_fda = F,
+                             parallel = F){
+  require(dplyr)
+  cmap_drug_prediction = cmap_rges 
+  cmap_drug_prediction$pert_iname = cmap_drug_prediction$name
+  
+  
+  #ignore weighting cell lines
+  if (weight_cell_line){
+    lincs_cell_line_weight <- read.csv(paste0(pipelineDataFolder, "/lincs_cell_lines_cor.csv"))
+    pred <- merge(lincs_drug_prediction, lincs_cell_line_weight, by ="cell_id")
+  }else{
+    pred <- cmap_drug_prediction
+    pred$cor <- 1
+  }
+  pred$RGES <- pred$cmap_score
+  
+  
+  
+  cmpd_freq <- table(pred$pert_iname)
+  pred <- subset(pred, pert_iname %in% names(cmpd_freq[cmpd_freq > 0]))
+  
+  pred_merged <- pred %>% 
+    group_by(pert_iname) %>% 
+    dplyr::summarise(
+      sRGES = mean(RGES),
+      n = length(RGES),
+      medRGES = median(RGES),
+      minRGES = min(RGES),
+      sd = sd(RGES))
+  pred_merged <- pred_merged[order(pred_merged$sRGES), ]
+  return(pred_merged)
+}
+
+computeCMAPrges = function(dz_signature,choose_fda = F,parallel = F,maxGenes=900,valid=F){
+require(dplyr)
+load(paste0(pipelineDataFolder,'/development/cmap/cmap_signatures_symbol.RData'))
+cmap_sig_info <-read.csv(paste0(pipelineDataFolder,'/development/cmap/cmap_drug_experiments_new.csv'),stringsAsFactors = F)
+gene.list <- toupper(cmap_signatures$Symbol)
+colnames(cmap_signatures)[3:6102] = cmap_sig_info$id
+
+
+if(valid==T){
+  print(1)
+  validCMAP = read.csv(paste0(pipelineDataFolder,'/development/cmap/cmap_valid_instances.csv'),stringsAsFactors = F)
+  cmap_sig_info = cmap_sig_info %>% left_join(validCMAP,by='id')
+  cmap_sig_info = cmap_sig_info %>% filter(valid == 1)
+  }
+
+
+dz_sigUsed <- dz_signature %>% filter(toupper(Symbol) %in% gene.list)
+dz_genes_up <- dz_sigUsed %>% filter(log2FoldChange>0) %>% arrange(desc(log2FoldChange)) %>% head(maxGenes)
+dz_genes_down <- dz_sigUsed %>% filter(log2FoldChange<0) %>% arrange(log2FoldChange) %>% head(maxGenes)
+write.csv(rbind(dz_genes_up,dz_genes_down), paste0(outputFolder,'dz_sig_used_CMAP.csv'))
+
+if(choose_fda == T){
+  fda_drugs = read.csv(paste0(pipelineDataFolder,"LINCS_RGES/repurposing_drugs_20170327.csv"),
+                       comment.char = "!", header=T, sep="\t")
+  cmap_sig_info <- cmap_sig_info %>% filter(tolower(name) %in% tolower(fda_drugs$pert_iname))
+}else{
+  print(2)
+  cmap_sig_info <- cmap_sig_info[!duplicated(cmap_sig_info$id),]  
+}
+
+sig.ids <- cmap_sig_info$id
+if(parallel == T){
+  require(doParallel)
+  registerDoParallel(cores=4)
+  dz_cmap_scores = foreach(exp_id = sig.ids,.combine = 'c')%dopar%{
+    cmap_exp_signature <- data.frame(gene.list,  
+                                     rank(-1 * cmap_signatures[, as.character(exp_id)], 
+                                          ties.method="random"))    
+    colnames(cmap_exp_signature) <- c("ids","rank")
+    #runs a function cmap_score_new from drugs_core_functions.R
+    cmap_score_new(dz_genes_up$Symbol,dz_genes_down$Symbol,
+                   cmap_exp_signature)
+    
+  }
+  dz_cmap_scores = data.frame(id = sig.ids,cmap_scores = dz_cmap_scores)
+  
+}else{
+  print(3)
+  dz_cmap_scores <- data.frame(matrix(ncol=2,nrow = 0))
+  colnames(dz_cmap_scores) = c("id","cmap_scores")
+  for (exp_id in sig.ids){
+    cmap_exp_signature <- data.frame(gene.list,  
+                                     rank(-1 * cmap_signatures[, as.character(exp_id)], 
+                                          ties.method="random"))    
+    colnames(cmap_exp_signature) <- c("ids","rank")
+    #runs a function cmap_score_new from drugs_core_functions.R
+    tmpDF = data.frame(id = exp_id,
+                       cmap_scores = cmap_score_new(dz_genes_up$Symbol,dz_genes_down$Symbol,
+                                                    cmap_exp_signature))
+    dz_cmap_scores = rbind(dz_cmap_scores,tmpDF)
+    # dz_cmap_scores <- c(dz_cmap_scores, 
+    #                     cmap_score_new(dz_genes_up$Symbol,dz_genes_down$Symbol,
+    #                                    cmap_exp_signature))
+  }
+}
+results <- left_join(dz_cmap_scores, cmap_sig_info, by = "id")
+results <- results %>% arrange(cmap_scores) 
+return(results)
+}
+
+
 

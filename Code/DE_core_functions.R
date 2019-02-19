@@ -61,6 +61,50 @@ computeRefTissue <- function(case_id = '', normal_id = '',
   }
 }
 
+computeCellLine <- function(case_id = '',
+                            expSet = NULL,
+                            LINCS_overlaps = F){
+  require(plyr)
+  require(dplyr)
+  require(foreach)
+  require(data.table)
+  #helper function by Ke
+  pick.out.cell.line <- function(expr.of.samples,expr.of.cell.lines,marker.gene){
+    marker.gene           <- intersect(rownames(expr.of.samples),(marker.gene))  
+    marker.gene           <- intersect(rownames(expr.of.cell.lines),(marker.gene)) 
+    correlation.matrix    <- cor(expr.of.samples[marker.gene,],expr.of.cell.lines[marker.gene,],method='spearman')
+    cell.line.median.cor  <- apply(correlation.matrix,2,median) %>% sort(decreasing = TRUE)
+    best.cell.line        <- names(cell.line.median.cor)[1]
+    p.value.vec           <- foreach(cell.line= setdiff(names(cell.line.median.cor),best.cell.line),.combine='c') %do% {
+      v                     <- correlation.matrix[,cell.line]
+      p.value               <- wilcox.test(correlation.matrix[,best.cell.line],v,alternative = 'greater',paired = TRUE)$p.value
+    }
+    names(p.value.vec) <- setdiff(names(cell.line.median.cor),best.cell.line)
+    fdr.vec            <- p.adjust(p.value.vec,method='fdr')
+    list(cell.line.median.cor=cell.line.median.cor,best.cell.line=best.cell.line,compare.fdr.vec=fdr.vec,correlation.matrix = correlation.matrix )
+  }
+  load(paste0(pipelineDataFolder,'/CCLE/CCLE_data_overlaps.RData'))
+  case_counts <- expSet[,case_id]
+  if(LINCS_overlaps == T){
+    CCLE.median                 <- apply(CCLE.overlaps,1,median)
+  }else{
+    CCLE.median = apply(CCLE.log2.read.count.matrix,1,median)
+  }
+  CCLE.expressed.gene         <- names(CCLE.median)[CCLE.median > 1]
+  tmp                         <- CCLE.log2.rpkm.matrix[CCLE.expressed.gene,]
+  tmp.rank                    <- apply(tmp,2,rank)
+  rank.mean                   <- apply(tmp.rank,1,mean)
+  rank.sd                     <- apply(tmp.rank,1,sd)
+  CCLE.rna.seq.marker.gene.1000                 <- names(sort(rank.sd,decreasing =TRUE))[1:1000]
+  TCGA.vs.CCLE.polyA.expression.correlation.result  <- pick.out.cell.line(case_counts, CCLE.overlaps,CCLE.rna.seq.marker.gene.1000)
+  topline <- data.frame(medcor = TCGA.vs.CCLE.polyA.expression.correlation.result$cell.line.median.cor) # could also do first 3 of TCGA.vs.CCLE.polyA.expression.correlation.result$cell.line.median.cor
+  topline$cellLine = row.names(topline)
+  topline = topline %>% select(cellLine,medcor)
+  load(paste0(pipelineDataFolder,'/CCLE/CCLE_all_demogx_cleaned.RData'))
+  topline = left_join(topline,CCLE_demoDat %>% select(CCLE.shortname,Age,Gender,Race,Site.Primary,Histology,Hist.Subtype1),by=c('cellLine'='CCLE.shortname'))
+  return(topline)
+}
+
 remLowExpr <- function(counts,counts_phenotype){
   x <-DGEList(counts = round(counts), group = counts_phenotype$sample_type )
   cpm_x <- cpm(x)
@@ -259,7 +303,9 @@ geneEnrich <- function(dz_signature,
     dn.gene.res = dn.gene.res[order(dn.gene.res$database, dn.gene.res$p), ]
     write.csv(dn.gene.res, paste0(outputFolder, "/dz_down_sig_genes_enriched", suffix,".csv"))  
   }
-  
+  up.gene.res$dir = 'up'
+  dn.gene.res$dir = 'dn'
+  res = rbind(up.gene.res,dn.gene.res)
 }
 
 getptidDF = function(tcga_sample.id){
