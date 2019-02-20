@@ -590,10 +590,10 @@ topLineEval <- function(topline = ''){
   sink(con, append=TRUE)
   sink(con, append=TRUE, type="message")
   
-  "AUC cortest"
-  AUC.cortest
-  "IC50 cortest"
-  IC50.cortest
+  print("AUC cortest")
+  print(AUC.cortest)
+  print("IC50 cortest")
+  print(IC50.cortest)
   
   sink() 
   sink(type="message")
