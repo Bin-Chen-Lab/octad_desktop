@@ -1,6 +1,8 @@
 Example Results
 
-After completing the pipeline, these are the results files you should generate. Some results are optional and will not appear if not enabled in your workflow document.
+Download first for best viewing experience.
+
+After completing the pipeline, these are the results files you will generate. Some results are optional and will not appear if not enabled in your workflow document.
 
 1. all_lincs_score.csv
      - p
@@ -25,10 +27,10 @@ After completing the pipeline, these are the results files you should generate. 
 20. SKBR3auc_insilico_validation.html
 21. SKBR3ic50_insilico_validation.html
 22. enrichment_analysis
-     -p
-     -p1
-     -p2
-     -p3
-     -p4
-     -p5
+     - p
+     - p1
+     - p2
+     - p3
+     - p4
+     - p5
 
