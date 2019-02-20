@@ -1,5 +1,5 @@
-Codes for OCTAD desktop 
-Updated 02/20/19
+## Codes for OCTAD desktop 
+
 
 All files can be found on the Chen Lab RNA-Seq server: 
 /home/ubuntu/chenlab_v2/proj/PatrickN/desktop_pipeline_v0.1/
