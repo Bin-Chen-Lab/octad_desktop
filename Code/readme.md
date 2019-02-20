@@ -7,7 +7,7 @@ All files can be found on the Chen Lab RNA-Seq server:
 This version includes some new data files, so be sure to download those from the above directory. 
 The pipeline is configured to run within the folder structure as found in the above directory.
 
-To run:
+# To run:
 - Start a new RStudio project under the installation folder (like the above directory)
 - source('install.packages.R')
 - Open breast_cancer_lumA.Rmd
@@ -20,7 +20,7 @@ line 477: ```{r EnrichmentAnalysis, eval=TRUE, message=FALSE, warning=FALSE, ech
 Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 
 
-Changelog:
+# Changelog:
 <ul>
 <li> 02/20/19: <ul>
 <li>Consolidated many previous source() calls into core_functions.R. Also combined previous "DE_core_functions.R" & "drugs_core_functions.R" into core_functions.R</li>
