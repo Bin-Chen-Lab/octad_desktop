@@ -1,0 +1,31 @@
+Time Log (in seconds, minutes, or hours)
+
+Total Time
+1.12433685110675
+
+Data Load Time
+52.2126550674438
+
+control_id time
+1.56736302375793
+
+tSNE Time
+1.51544404029846
+
+DE Time
+1.99439773162206
+
+sRGES Time
+7.59017904996872
+
+Enrich Time
+56.2486770153046
+
+GEA Time
+5.6103081703186
+
+Visualize Hits Time
+4.96180319786072
+
+Ranking Time
+17.2189919948578
