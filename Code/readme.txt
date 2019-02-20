@@ -1,9 +1,11 @@
 Codes for OCTAD desktop 
 Updated 02/20/19
 
-All files can be found on the Chen Lab RNA-Seq server: /home/ubuntu/chenlab_v2/proj/PatrickN/desktop_pipeline_v0.1/
+All files can be found on the Chen Lab RNA-Seq server: 
+/home/ubuntu/chenlab_v2/proj/PatrickN/desktop_pipeline_v0.1/
 
-This version includes some new data files, so be sure to download those from the above directory. The pipeline is configured to run within the folder structure as found in the above directory.
+This version includes some new data files, so be sure to download those from the above directory. 
+The pipeline is configured to run within the folder structure as found in the above directory.
 
 To run:
 - Start a new RStudio project under the installation folder (like the above directory)
