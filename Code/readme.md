@@ -28,6 +28,7 @@ Changelog:
 <li>Compound enrichment is no longer possible without using a workflow rmd (or taking the code from the EnrichmentAnalysis block).</li>
 <li>All compound enrichment analysis is disabled by default due to taking a long time. Can be enabled by editing EnrichmentAnalysis chunk option "eval" to TRUE. Can further be modulated by changing "targets" variable in the same chunk. "target_type = 'ChemCluster'" should never be changed.</li>
 <li>Updated core_functions.R to properly output drug_sensitivity_insilico_results.txt. It had been putting out a blank .txt.</li>
+<li>Removed support for sRGES parallelization via doParallel as it was causing different issues for different hardware. Using compiler as stand-in until we can work this out. This has not significantly impacted overall duration.</li>
 </ul>
 </li>
 </ul>
