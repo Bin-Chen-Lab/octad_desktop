@@ -1,6 +1,6 @@
 # octad_desktop
 Creators: 
-Bin Chen, PhD. MSU. contact: 
+Bin Chen, PhD. MSU. contact: Bin.Chen@hc.msu.edu
 William Zeng. MD Candidate. UCSF. contact: billy.zeng@ucsf.edu
 Patrick Newbury, MD. contact: patrick.newbury@hc.msu.edu
 
