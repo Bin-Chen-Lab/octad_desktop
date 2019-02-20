@@ -4,10 +4,8 @@ Creators:
 <li>Bin Chen, PhD. MSU. contact: Bin.Chen@hc.msu.edu</li>
 <li>William Zeng. MD Candidate. UCSF. contact: billy.zeng@ucsf.edu</li>
 <li>Patrick Newbury, MD. contact: patrick.newbury@hc.msu.edu</li>
+<li>Support: Anita Wen</li>
 </ul>
-
-Support:
-Anita Wen
 
 Web version: octad.org
 
