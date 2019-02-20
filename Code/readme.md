@@ -22,7 +22,9 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 
 Changelog:
 <ul>
-<li> 02/20/19: </li>
+<li> 02/20/19: <ul>
 <li>Updated core_functions.R to properly output drug_sensitivity_insilico_results.txt. It had been putting out a blank .txt.</li>
+</ul>
+</li>
 </ul>
 
