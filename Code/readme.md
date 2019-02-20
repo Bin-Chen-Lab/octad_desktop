@@ -7,6 +7,8 @@ All files can be found on the Chen Lab RNA-Seq server:
 This version includes some new data files, so be sure to download those from the above directory. 
 The pipeline is configured to run within the folder structure as found in the above directory.
 
+Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
+
 # To run:
 - Start a new RStudio project under the installation folder (like the above directory)
 - source('install.packages.R')
@@ -16,8 +18,6 @@ The pipeline is configured to run within the folder structure as found in the ab
 - If this is able to complete, then try new combinations of case_id and normal_id (lines 154-191)
 - Also try experimenting with compound enrichment 
 line 477: ```{r EnrichmentAnalysis, eval=TRUE, message=FALSE, warning=FALSE, echo=FALSE, results='hide'}
-
-Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 
 
 # Changelog:
