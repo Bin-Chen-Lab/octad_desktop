@@ -23,7 +23,9 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 Changelog:
 <ul>
 <li> 02/20/19: <ul>
-<li>Updated core_functions.R to properly output drug_sensitivity_insilico_results.txt. It had been putting out a blank .txt.</li>
+<li>Consolidated many previous source() calls into core_functions.R. Also combined previous "DE_core_functions.R" & "drugs_core_functions.R" into core_functions.R</li>
+<li>Enrichment is no longer possible without using a workflow rmd (or taking the code from the EnrichmentAnalysis block).</li>
+<li>All compound enrichment analysis is disabled by default due to taking a long time. Can be enabled by editing EnrichmentAnalysis chunk option "eval" to TRUE. Can further be modulated by changing "targets" variable in the same chunk. "target_type = 'ChemCluster'" should never be changed.</li>
 <li>Updated core_functions.R to properly output drug_sensitivity_insilico_results.txt. It had been putting out a blank .txt.</li>
 </ul>
 </li>
