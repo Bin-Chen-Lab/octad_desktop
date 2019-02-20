@@ -14,8 +14,8 @@ To run:
 - Edit line 15 "base.folder"
 - Knit (takes about 10-15 minutes)
 - If this is able to complete, then try new combinations of case_id and normal_id (lines 154-191)
-- Also try experimenting with compound enrichment (set line 477 "```{r EnrichmentAnalysis, eval=TRUE, message=FALSE, warning=FALSE, echo=FALSE, results='hide'}
-")
+- Also try experimenting with compound enrichment 
+line 477: ```{r EnrichmentAnalysis, eval=TRUE, message=FALSE, warning=FALSE, echo=FALSE, results='hide'}
 
 Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 
