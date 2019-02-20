@@ -1,10 +1,10 @@
 # octad_desktop
 Creators: 
-Bin Chen, PhD. MSU. contact: Bin.Chen@hc.msu.edu
-
-William Zeng. MD Candidate. UCSF. contact: billy.zeng@ucsf.edu
-
-Patrick Newbury, MD. contact: patrick.newbury@hc.msu.edu
+<ul>
+<li>Bin Chen, PhD. MSU. contact: Bin.Chen@hc.msu.edu</li>
+<li>William Zeng. MD Candidate. UCSF. contact: billy.zeng@ucsf.edu</li>
+<li>Patrick Newbury, MD. contact: patrick.newbury@hc.msu.edu</li>
+</ul>
 
 Support:
 Anita Wen
@@ -24,3 +24,4 @@ Tasks:
 - [x] Finish code updates as of 02/20/19
 - [ ] Finalize manuscript
 - [ ] Finalize octad.org
+
