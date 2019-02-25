@@ -22,5 +22,6 @@ Tasks:
 - [x] Finish code updates as of 02/20/19
 - [ ] Finalize manuscript
 - [ ] Finalize octad.org
-- [ ] Precompute 10k random ssGSEA scores
+- [x] Precompute 10k random ssGSEA scores (17k!)
+- [ ] Edit parameter chunk with Billy's optimization code
 
