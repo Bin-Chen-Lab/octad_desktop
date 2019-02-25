@@ -472,7 +472,6 @@ VDH.time
 Additional files are needed here, depending on target_type.  
 Each of the target_type will create a pdf and a csv file. 
   
-This optional chunk can take over 30min to run!
 
 ***  
 ```{r EnrichmentAnalysis, eval=TRUE, message=FALSE, warning=FALSE, echo=FALSE, results='hide'}
@@ -480,13 +479,9 @@ This optional chunk can take over 30min to run!
 setwd(base.folder)
 enrich.time.start <- Sys.time()
 
-# source(paste0(CodeFolder,'drugs_core_functions.R'))
 source(paste0(CodeFolder,'core_functions.R'))
-targets = c('chembl_targets','mesh','meshes','sea_targets','ChemCluster') # include as many as you prefer. They take quite a long time each to run!!
+targets = c('chembl_targets','mesh','meshes','sea_targets','ChemCluster') # include as many or few as you prefer. 
 # targets = c('chembl_targets','mesh','meshes')
-# targets = c('chembl_targets','mesh') 
-# targets = c('chembl_targets') 
-
 
 
 enrichFolder <- paste0(outputFolder,'enrichment_analysis/')
@@ -501,69 +496,6 @@ for (target_type in targets){
   drug_enrichment(sRGES = sRGES, target_type = target_type)
 }
 
-
-
-# for (target_type in targets){
-#   load(paste0(dataFolder,"cmpd_sets_", target_type, ".RData"))
-#   
-#   enrichFolder.n <- paste0(enrichFolder,target_type,'/')
-#   if (!dir.exists(enrichFolder.n)) {
-#     dir.create(enrichFolder.n)
-#     }
-#   
-#   cmpdSets = cmpd_sets$cmpd.sets
-#   sRGES = read.csv(paste0(outputFolder,'/sRGES.csv'),stringsAsFactors = F)
-#   
-#   gsea_p = drug_enrichment(sRGES=sRGES,target_type=target_type)
-#   write.csv(gsea_p, paste0(enrichFolder.n, "/enriched_sRGES_all", target_type, ".csv"))
-#   top_target = gsea_p$target[1]
-#   sRGES$rank = rank(sRGES$sRGES)
-#   target_drugs_score = sRGES$rank[sRGES$pert_iname %in% cmpdSets[[top_target]]]
-#   pdf(paste0(enrichFolder.n, "/top_enriched_sRGES_all_", target_type, ".pdf"))
-#   limma::barcodeplot(sRGES$sRGES, target_drugs_score, main = top_target, xlab = "sRGES")
-#   dev.off()
-# }
-
-
-# target_type = 'ChemCluster'
-# load(paste0(dataFolder,"cmpd_sets_", target_type, ".RData"))
-# sRGES = read.csv(paste0(outputFolder,'/sRGES.csv'),stringsAsFactors = F)
-# #cmpd_sets = cluster_filter(sRGES, target_type)
-# cmpdSets = cmpd_sets$cmpd.sets
-# names(cmpdSets) = cmpd_sets$cmpd.set.names
-# 
-# gsea_summary = drug_enrichment(sRGES, target_type)
-# 
-# write.csv(gsea_summary, paste0(enrichFolder, "/enriched_", target_type, ".csv"))
-
-
-
-# top.out.num = nrow(gsea_summary[which(gsea_summary$p<=0.05),])
-# if (top.out.num == 0) {
-#   top.out.num = 1
-# }
-# 
-# # saving clusters & drugs 
-# clusternames <- as.character((gsea_summary[which(gsea_summary$padj<=0.05),])$target)
-# topclusterlist <- cmpdSets[clusternames]
-# cat(sapply(topclusterlist, toString), file = paste0(enrichFolder,"misc.csv"), sep="\n")
-# clusterdf <- read.csv2(paste0(enrichFolder,"misc.csv"), header=FALSE)
-# clusterdf$cluster <- clusternames
-# clusterdf$pval <- (gsea_summary[which(gsea_summary$p<=0.05),])$p
-# colnames(clusterdf)[1] <- "drugs.in.cluster"
-# write.csv(clusterdf,file=paste0(enrichFolder,'drugstructureclusters.csv'),row.names = F)
-# 
-# for (i in 1:top.out.num) {
-#   top_target = as.character(gsea_summary$target[i])
-#   sRGES$rank = rank(sRGES$sRGES)
-#   target_drugs_score = sRGES$rank[sRGES$pert_iname %in% cmpdSets[[top_target]]]
-#   if (length(target_drugs_score) < 3) {
-#     next
-#   }
-#   pdf(paste0(enrichFolder, "/top_enriched_", top_target, "_", target_type, ".pdf"))
-#   barcodeplot(sRGES$sRGES, target_drugs_score, main = top_target, xlab = "sRGES")
-#   dev.off()
-# }
 
 enrich.time.stop <- Sys.time()
 enrich.time <- enrich.time.stop - enrich.time.start
