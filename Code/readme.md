@@ -31,6 +31,10 @@ line 477: ```{r EnrichmentAnalysis, eval=TRUE, message=FALSE, warning=FALSE, ech
 <li>Removed support for sRGES parallelization via doParallel as it was causing different issues for different hardware. Using compiler as stand-in until we can work this out. This has not significantly impacted overall duration.</li>
 </ul>
 <li> 02/25/19: <ul>
+<li>Added random_gsea_score.RData to dataFolder. This is 17,000 random GSEAs for each enrichment type to increase padj resolution and speed. Overall run time now ~11min with all features enabled.</li>
+<li>Changed breast_cancer_lumA.Rmd workflow example chunk 'EnrichmentAnalysis'. Now Enabled by default. Now runs loop of drug_enrichment() on all enrichment types, as above bullet enabled quick computation of all 5.</li>
+<li>Made new auto-generating output folders for enrichment analysis subtypes.</li>
+<li>Restricted output of enrichment analysis to top 50 per subtype. SEA still outputting ~1300 significant hits.</li>
 </li>
 </ul>
 
