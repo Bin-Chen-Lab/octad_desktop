@@ -11,7 +11,7 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 
 ### To run:
 - Start a new RStudio project under the installation folder (like the above directory)
-- source('install.packages.R')
+- source('install_packages.R')
 - Open breast_cancer_lumA.Rmd
 - Edit line 15 "base.folder"
 - Knit (takes about 10-15 minutes)
