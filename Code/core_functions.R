@@ -250,35 +250,96 @@ computeRandomLincsRGES = function(dz_signature,choose_fda = T,parallel = T,n_per
 
 drug_enrichment <- function(sRGES,target_type){
   require(GSVA)
+  
+  enrichFolder.n <- paste0(enrichFolder,target_type,'/')
+  if (!dir.exists(enrichFolder.n)) {
+    dir.create(enrichFolder.n)
+  }
+  
+  #load random scores
   load(paste0(dataFolder,"cmpd_sets_", target_type, ".RData"))
   cmpdSets = cmpd_sets$cmpd.sets
   names(cmpdSets) = cmpd_sets$cmpd.set.names
   
   drug_pred = sRGES
   
-  #FDA approved using repurposing_drugs_20170327.txt
-  
-  
-  
-  #create a random gene set
-  random_times = 1000
-  rgess = matrix(NA, nrow = nrow(drug_pred), ncol = random_times)
-  for (i in 1:random_times){
-    rgess[, i] = sample(drug_pred$sRGES, nrow(rgess))
-  }
+  rgess = matrix(drug_pred$sRGES, ncol = 1)
   rownames(rgess) = drug_pred$pert_iname
-  rgess = cbind(rgess, drug_pred$sRGES)
-  
   gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8)
   
+  gsea_results = cbind(random_gsea_score[[target_type]], gsea_results)
+  
   gsea_p = apply(gsea_results, 1, function(x){
-    sum(x[1:random_times] > x[random_times+1])/random_times
+    sum(x[1:ncol(random_gsea_score[[target_type]])] > x[ncol(random_gsea_score[[target_type]])+1])/ncol(random_gsea_score[[target_type]])
   })
   
   gsea_p = data.frame(target = names(gsea_p), p = gsea_p, padj = p.adjust(gsea_p))
-  gsea_p = gsea_p[order(gsea_p$p), ]
-  return(gsea_p)
+  gsea_p = gsea_p[order(gsea_p$padj), ]
+  # return(gsea_p)
+  write.csv(gsea_p, paste0(enrichFolder.n, "/enriched_", target_type, ".csv"))
+  top.out.num = nrow(gsea_p[which(gsea_p$padj<=0.05),])
+  if (top.out.num == 0) {
+    top.out.num = 1
+  }
+  if(top.out.num > 50){
+    top.out.num <- 50
+  }
+  for (i in 1:top.out.num) {
+    top_target = as.character(gsea_p$target[i])
+    sRGES$rank = rank(sRGES$sRGES)
+    target_drugs_score = sRGES$rank[sRGES$pert_iname %in% cmpdSets[[top_target]]]
+    if (length(target_drugs_score) < 3) {
+      next
+    }
+    pdf(paste0(enrichFolder.n, "/top_enriched_", top_target, "_", target_type, ".pdf"))
+    barcodeplot(sRGES$sRGES, target_drugs_score, main = top_target, xlab = "sRGES")
+    dev.off()
+  }
+  if (target_type == "ChemCluster"){
+    clusternames <- as.character((gsea_p[which(gsea_p$padj<=0.05),])$target)
+    topclusterlist <- cmpdSets[clusternames]
+    cat(sapply(topclusterlist, toString), file = paste0(enrichFolder.n,"misc.csv"), sep="\n")
+    clusterdf <- read.csv2(paste0(enrichFolder.n,"misc.csv"), header=FALSE)
+    clusterdf$cluster <- clusternames
+    clusterdf$pval <- (gsea_p[which(gsea_p$padj<=0.05),])$padj
+    colnames(clusterdf)[1] <- "drugs.in.cluster"
+    write.csv(clusterdf,file=paste0(enrichFolder.n,'drugstructureclusters.csv'),row.names = F)
+  }
 }
+
+
+
+# drug_enrichment <- function(sRGES,target_type){
+#   require(GSVA)
+#   load(paste0(dataFolder,"cmpd_sets_", target_type, ".RData"))
+#   cmpdSets = cmpd_sets$cmpd.sets
+#   names(cmpdSets) = cmpd_sets$cmpd.set.names
+#   
+#   drug_pred = sRGES
+#   
+#   #FDA approved using repurposing_drugs_20170327.txt
+#   
+#   
+#   
+#   #create a random gene set
+#   random_times = 1000
+#   rgess = matrix(NA, nrow = nrow(drug_pred), ncol = random_times)
+#   for (i in 1:random_times){
+#     rgess[, i] = sample(drug_pred$sRGES, nrow(rgess))
+#   }
+#   rownames(rgess) = drug_pred$pert_iname
+#   rgess = cbind(rgess, drug_pred$sRGES)
+#   
+#   gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8)
+#   
+#   gsea_p = apply(gsea_results, 1, function(x){
+#     sum(x[1:random_times] > x[random_times+1])/random_times
+#   })
+#   
+#   gsea_p = data.frame(target = names(gsea_p), p = gsea_p, padj = p.adjust(gsea_p))
+#   gsea_p = gsea_p[order(gsea_p$p), ]
+#   return(gsea_p)
+# }
 
 visualizeLincsHits = function(rges,dz_sigUsed,drugs=''){
   require(pheatmap)
@@ -527,7 +588,7 @@ topLineEval <- function(topline = ''){
     labs(x = xaxis, y = yaxis, title = Title) +
     theme(legend.position = "right", legend.background = element_rect(fill="#F5F5F5"), legend.title = element_blank())
   
-  p1 <- ggplotly(p, tooltip = c("text", "label")) %>%  layout(margin=list(l=15))
+  p1 <- ggplotly(p, tooltip = c("text", "label")) %>%  layout(margin=list(l=15)) # change to white background
   
   ic50graph <- p1 %>% 
     add_annotations( text=Legend.title,xref="paper",yref="paper",x=1.02,xanchor="left",y=0.8,yanchor="bottom",legendtitle=TRUE,showarrow=FALSE ) %>%
@@ -594,7 +655,7 @@ topLineEval <- function(topline = ''){
   print(AUC.cortest)
   print("IC50 cortest")
   print(IC50.cortest)
-  
+
   sink() 
   sink(type="message")
   }
