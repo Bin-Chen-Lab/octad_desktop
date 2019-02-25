@@ -30,6 +30,7 @@ line 477: ```{r EnrichmentAnalysis, eval=TRUE, message=FALSE, warning=FALSE, ech
 <li>Updated core_functions.R to properly output drug_sensitivity_insilico_results.txt. It had been putting out a blank .txt.</li>
 <li>Removed support for sRGES parallelization via doParallel as it was causing different issues for different hardware. Using compiler as stand-in until we can work this out. This has not significantly impacted overall duration.</li>
 </ul>
+<li> 02/25/19: <ul>
 </li>
 </ul>
 
