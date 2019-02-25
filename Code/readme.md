@@ -16,6 +16,7 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 - Edit line 15 "base.folder"
 - Knit (takes about 10-15 minutes)
 - If this is able to complete, then try new combinations of case_id and normal_id (lines 154-191)
+- For Linux, you'll need to install pandoc: https://github.com/rstudio/rmarkdown/blob/master/PANDOC.md
 
 
 ### Changelog:
