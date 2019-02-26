@@ -35,6 +35,7 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li>Changed core_functinos.R's drug_enrichment() to streamline drug enrichment analysis.</li>
 <li>Made new auto-generating output folders for enrichment analysis subtypes.</li>
 <li>Restricted output of enrichment analysis to top 50 per subtype. SEA still outputting ~1300 significant hits.</li>
+</ul>
 <li> 02/26/19: <ul>
 <li>Miscellaneous minor changes in workflow and core_functions.R</li>
 </li>
