@@ -594,7 +594,8 @@ topLineEval <- function(topline = ''){
     add_annotations( text=Legend.title,xref="paper",yref="paper",x=1.02,xanchor="left",y=0.8,yanchor="bottom",legendtitle=TRUE,showarrow=FALSE ) %>%
     layout( legend=list(y=0.8, yanchor="top" ) )
   
-  htmlwidgets::saveWidget(as_widget(ic50graph), paste0(outputFolder,topline,"ic50_insilico_validation.html"))
+  htmlwidgets::saveWidget(as_widget(ic50graph), paste0(outputFolder,topline,"ic50_insilico_validation.html"),selfcontained = F) 
+  # note: files are simply too large to set selfcontained = T. This just causes issues on linux machines.
   
   
   # AUC

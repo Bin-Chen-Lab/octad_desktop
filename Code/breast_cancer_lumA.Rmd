@@ -87,6 +87,38 @@ fileConn<-file(paste0(outputFolder,"parameters.txt"))
 writeLines(c("Normalization Parameters:","normalize_samples",normalize_samples,"","k",k,"","n_topGenes",n_topGenes,"","DE_method",DE_method,"","--------------------------","","Disease Signature Parameters:","log2fchange",log2fchange,"","padjusted",padjusted,"","--------------------------","","sRGES Parameters:","landmark",landmark,"","choose_fda_drugs",choose_fda_drugs,"","max_gene_size",max_gene_size,"","weight_cell_line",weight_cell_line), fileConn)
 close(fileConn)
 
+
+normalize_samples = T # default T
+k = 1 # default 1
+
+
+
+########## To implement ##########
+# for(i in c(1000,5000,10000,15000)){
+# n_topGenes = i # default 10000 for nondemo
+# DE_method = 'edgeR' # Default 'edgeR' ... Other choice is 'limma'
+# # logging parameters
+# write(paste0(outputFolder,'--Parameters--'), file = paste0(outputFolder,"parameters.txt"))
+# fileConn<-file(paste0(outputFolder,"parameters.txt"))
+# writeLines(c("Normalization Parameters:","normalize_samples",normalize_samples,"","k",k,"","n_topGenes",n_topGenes,"","DE_method",DE_method,"","--------------------------"), fileConn)
+# close(fileConn)
+# res = diffExp(case_id = case_id,
+#         control_id = control_id,
+#         expSet = dz_expr,
+#         normalize_samples = normalize_samples,
+#         k=k,
+#         n_topGenes=n_topGenes,
+#         DE_method='edgeR'
+#         )
+# gene_info <- data.table::fread(paste0(pipelineDataFolder,'/gene_info_hs.csv'),stringsAsFactors = F)
+# ensembl_info <- data.table::fread(paste0(pipelineDataFolder,'/gencode.v23.annotation.gene.probeMap.csv'),stringsAsFactors = F)
+# res = res %>% left_join(ensembl_info %>% select(gene,ensembl),by=c('id'='ensembl')) %>% 
+#   left_join(gene_info,by=c('gene'='Symbol'))
+# write.csv(res,file=paste0(outputFolder,'res_geneinfo_','k',k,'_n',n_topGenes,'.csv'))  
+# }
+
+
+
 ```
 
 Have the following files in your dataFolder:
