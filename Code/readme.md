@@ -40,6 +40,9 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 </ul>
 <li> 02/26/19: <ul>
 <li>Miscellaneous minor changes in workflow and core_functions.R</li>
+</ul>
+<li> 02/27/19: <ul>
+<li></li>
 </li>
 </ul>
 
