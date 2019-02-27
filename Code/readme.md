@@ -17,6 +17,7 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 - Knit (takes about 10-15 minutes)
 - If this is able to complete, then try new combinations of case_id and normal_id (lines 154-191)
 - For Linux, you'll also need to install pandoc: https://github.com/rstudio/rmarkdown/blob/master/PANDOC.md
+  - Alternatively for centos, you'll need to install Cairo (sudo yum install cairo-devel) and install the Cairo R package via install.packages("Cairo")
 
 
 ### Changelog:
