@@ -263,7 +263,7 @@ drug_enrichment <- function(sRGES,target_type){
   
   drug_pred = sRGES
   
-  rgess = matrix(drug_pred$sRGES, ncol = 1)
+  rgess = matrix(-1*drug_pred$sRGES, ncol = 1)
   rownames(rgess) = drug_pred$pert_iname
   gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8)
   
@@ -498,7 +498,7 @@ computeCellLine <- function(case_id = '',
     }
     names(p.value.vec) <- setdiff(names(cell.line.median.cor),best.cell.line)
     fdr.vec            <- p.adjust(p.value.vec,method='fdr')
-    list(cell.line.median.cor=cell.line.median.cor,best.cell.line=best.cell.line,compare.fdr.vec=fdr.vec,correlation.matrix = correlation.matrix )
+    list(cell.line.median.cor=cell.line.median.cor,best.cell.line=best.cell.line,compare.fdr.vec=fdr.vec,correlation.matrix = correlation.matrix ) 
   }
   load(paste0(dataFolder,'CCLE_OCTAD.RData'))
   case_counts <- expSet[,case_id]
@@ -514,13 +514,16 @@ computeCellLine <- function(case_id = '',
   rank.mean                   <- apply(tmp.rank,1,mean)
   rank.sd                     <- apply(tmp.rank,1,sd)
   CCLE.rna.seq.marker.gene.1000                 <- names(sort(rank.sd,decreasing =TRUE))[1:1000]
-  TCGA.vs.CCLE.polyA.expression.correlation.result  <- pick.out.cell.line(case_counts, CCLE.overlaps,CCLE.rna.seq.marker.gene.1000)
-  topline <- data.frame(medcor = TCGA.vs.CCLE.polyA.expression.correlation.result$cell.line.median.cor) # could also do first 3 of TCGA.vs.CCLE.polyA.expression.correlation.result$cell.line.median.cor
+  TCGA.vs.CCLE.polyA.expression.correlation.result  <- try(pick.out.cell.line(case_counts, CCLE.overlaps,CCLE.rna.seq.marker.gene.1000), 
+                                                           outFile = paste0(outputFolder,"cellLineRankingError.txt"))
+  topline <- data.frame(medcor = TCGA.vs.CCLE.polyA.expression.correlation.result$cell.line.median.cor) # could also do first 
+  # 3 of TCGA.vs.CCLE.polyA.expression.correlation.result$cell.line.median.cor
   topline <- rownames(topline)[1]
   # topline$cellLine = row.names(topline)
   # topline = topline %>% select(cellLine,medcor)
   # load(paste0(dataFolder,'CCLE_OCTAD.RData'))
-  # topline = left_join(topline,CCLE_demoDat %>% select(CCLE.shortname,Age,Gender,Race,Site.Primary,Histology,Hist.Subtype1),by=c('cellLine'='CCLE.shortname'))
+  # topline = left_join(topline,CCLE_demoDat %>% select(CCLE.shortname,Age,Gender,Race,Site.Primary,Histology,Hist.Subtype1),
+  #  by=c('cellLine'='CCLE.shortname'))
   return(topline)
 }
 
@@ -644,7 +647,7 @@ topLineEval <- function(topline = ''){
     add_annotations( text=Legend.title,xref="paper",yref="paper",x=1.02,xanchor="left",y=0.8,yanchor="bottom",legendtitle=TRUE,showarrow=FALSE ) %>%
     layout( legend=list(y=0.8, yanchor="top" ) )
   
-  htmlwidgets::saveWidget(as_widget(aucgraph), paste0(outputFolder,topline,"auc_insilico_validation.html"))
+  htmlwidgets::saveWidget(as_widget(aucgraph), paste0(outputFolder,topline,"auc_insilico_validation.html"),selfcontained = F) # test
   
   
   # logging cortests
@@ -694,8 +697,8 @@ compEmpContGenes <- function(counts, counts_phenotype, n_topGenes = 5000){
   empirical
 }
 
-#dev on 9-23-18
-#load('~/octad_desktop/Data/dz.expr.log2.readCounts.demo.RData')
+
+
 
 diffExp <- function(case_id='',control_id='',expSet=dz_expr,
                     normalize_samples=T,
@@ -708,7 +711,7 @@ diffExp <- function(case_id='',control_id='',expSet=dz_expr,
   counts_phenotype <- rbind(data.frame(sample = case_id,sample_type = 'case'),
                             data.frame(sample = control_id, sample_type = 'control'))
   counts = expSet[,as.character(counts_phenotype$sample)]
-  counts = 2^counts - 1 #unlog the counts it was log(2x + 1)
+  counts = 2^counts - 1 #unlog the counts it was log(2x + 1) in dz.expr.log2.readCounts
   counts_phenotype$sample = as.character(counts_phenotype$sample)
   counts_phenotype$sample_type = factor(counts_phenotype$sample_type, levels = c("control", "case"))
   highExpGenes <- remLowExpr(counts,counts_phenotype)
@@ -759,8 +762,8 @@ diffExp <- function(case_id='',control_id='',expSet=dz_expr,
   res <- lrt$table
   colnames(res) <- c("log2FoldChange", "logCPM", "LR", "pvalue")
   res$padj <- p.adjust(res$pvalue)
-  res$id = row.names(res)
-  res = res %>% select(id,everything())
+  res$identifier <- row.names(res)
+  res = res %>% select(identifier,everything())
   return(res)
 }
 

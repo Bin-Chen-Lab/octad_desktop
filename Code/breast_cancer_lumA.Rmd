@@ -88,36 +88,6 @@ writeLines(c("Normalization Parameters:","normalize_samples",normalize_samples,"
 close(fileConn)
 
 
-normalize_samples = T # default T
-k = 1 # default 1
-
-
-
-########## To implement ##########
-# for(i in c(1000,5000,10000,15000)){
-# n_topGenes = i # default 10000 for nondemo
-# DE_method = 'edgeR' # Default 'edgeR' ... Other choice is 'limma'
-# # logging parameters
-# write(paste0(outputFolder,'--Parameters--'), file = paste0(outputFolder,"parameters.txt"))
-# fileConn<-file(paste0(outputFolder,"parameters.txt"))
-# writeLines(c("Normalization Parameters:","normalize_samples",normalize_samples,"","k",k,"","n_topGenes",n_topGenes,"","DE_method",DE_method,"","--------------------------"), fileConn)
-# close(fileConn)
-# res = diffExp(case_id = case_id,
-#         control_id = control_id,
-#         expSet = dz_expr,
-#         normalize_samples = normalize_samples,
-#         k=k,
-#         n_topGenes=n_topGenes,
-#         DE_method='edgeR'
-#         )
-# gene_info <- data.table::fread(paste0(pipelineDataFolder,'/gene_info_hs.csv'),stringsAsFactors = F)
-# ensembl_info <- data.table::fread(paste0(pipelineDataFolder,'/gencode.v23.annotation.gene.probeMap.csv'),stringsAsFactors = F)
-# res = res %>% left_join(ensembl_info %>% select(gene,ensembl),by=c('id'='ensembl')) %>% 
-#   left_join(gene_info,by=c('gene'='Symbol'))
-# write.csv(res,file=paste0(outputFolder,'res_geneinfo_','k',k,'_n',n_topGenes,'.csv'))  
-# }
-
-
 
 ```
 
@@ -148,10 +118,6 @@ Have the following scripts in your CodeFolder:
   
 * [your workflow].Rmd (this Rmd is an example)  
 * core_functions.R  
-* Diff_Exp.R  
-* drug_enrichment_analysis.R  
-* gene_enrichment_analysis.R  
-* RankCellLines.R  
 * runRGES_dz_arrangeMax.R (or runRGES_dz_arrangeMax_compiler.R or runRGES_dz_arrangeMax_doParallel.R)  
 * visualize_drug_hits.R  
 ```{r CodeFolder}
@@ -190,6 +156,7 @@ allbrcaids     <- phenoDF_case$sample.id
 lumA_onlydz    <- lumA_over50 %>% filter(sample.id %in% allbrcaids)
 phenoDF_case   <- filter(phenoDF,sample.id %in% as.character(lumA_onlydz$sample.id))
 
+# Example where we subset phenoDF to only include samples from certain sites of interest. Useful when computeRefTissue is unlikely to work.
 # skin sample example
 # condinfo     <- grep('^SKIN',phenoDF$biopsy.site)
 # skin.samples <- phenoDF$sample.id[condinfo]
@@ -211,6 +178,7 @@ phenoDF_case   <- filter(phenoDF,sample.id %in% as.character(lumA_onlydz$sample.
 Create a list with sample IDs for the cancer of interest (case). 
 ```{r case.load2}
 case_id <- phenoDF_case$sample.id
+write(case_id, file = paste0(outputFolder,'case_ids.txt'))
 ```
 Results: **`r nrow(phenoDF_case)`** case IDs.  
 ***
@@ -223,6 +191,7 @@ setwd(base.folder)
 phenoDF_Female <- phenoDF %>% filter(gender == "Female")
 normal_id = (phenoDF_Female %>% filter(data.source == 'GTEX'))$sample.id
 
+# selecting pool of normal samples with similar (but not identical) names: 
 # normal_id = (phenoDF_skin %>% filter(data.source == 'GTEX'))$sample.id
 # all.mitf <- subset(df,rownames(df) %in% all.samples)
 # all.mitf.pheno <- merge(x=all.mitf,y=phenoDF[,c('sample.id','sample.type','biopsy.site')],by.x="row.names",by.y="sample.id", allx=TRUE)
@@ -266,7 +235,7 @@ control_id <- computeRefTissue(case_id = case_id, #computes ref tissue given cas
                                normal_id = normal_id,
                                expSet = dz_expr, #expSet is a counts dataframe that contains both case and normal counts. 
                                control_size = 50) 
-head(control_id)
+write(control_id, file = paste0(outputFolder,'control_ids.txt'))
 #this function will also generate a csv called case_normal_median_cor.csv that includes the median correlation of each normal sample.
 normal_counts = dz.expr.log2.read.count[,control_id]
 case_counts = dz.expr.log2.read.count[,case_id]
@@ -406,7 +375,35 @@ setwd(base.folder)
 
 DE.start <- Sys.time()
 
-source(paste0(CodeFolder,'Diff_Exp.R'))
+########## To evaluate other n_topGenes settings ##########
+# for(i in c(1000,5000,15000)){
+# n_topGenesLoop = i # default 10000
+# DE_method = 'edgeR' # Default 'edgeR'. Other choice is 'limma'
+# # logging parameters
+# write(paste0("n_topGenes = ",n_topGenesLoop), file = paste0(outputFolder,"parameters.txt"),append = TRUE)
+# fileConn<-file(paste0(outputFolder,"parameters.txt"))
+# close(fileConn)
+# res = diffExp(case_id = case_id,
+#         control_id = control_id,
+#         expSet = dz_expr,
+#         normalize_samples = normalize_samples,
+#         k=k,
+#         n_topGenes=n_topGenesLoop,
+#         DE_method=DE_method
+#         )
+# res_geneinfo <- left_join(res, merged_gene_info, by=c('identifier'='ensembl'))
+# write.csv(res,file=paste0(outputFolder,'res_geneinfo_',"n_topGenes_",n_topGenesLoop,'.csv'))
+# }
+
+# important that the below res is generated LAST.
+res = diffExp(case_id = case_id,
+        control_id = control_id,
+        expSet = dz_expr,
+        normalize_samples = normalize_samples,
+        k=k,
+        n_topGenes=n_topGenes,
+        DE_method=DE_method
+        )
 
 DE.end <- Sys.time()
 DE.time <- DE.end - DE.start
@@ -512,8 +509,8 @@ setwd(base.folder)
 enrich.time.start <- Sys.time()
 
 source(paste0(CodeFolder,'core_functions.R'))
-targets = c('chembl_targets','mesh','meshes','sea_targets','ChemCluster') # include as many or few as you prefer. 
-# targets = c('chembl_targets','mesh','meshes')
+targets = c('chembl_targets','mesh','sea_targets','ChemCluster') # include as many or few as you prefer. 
+# targets = c('chembl_targets','mesh')
 
 
 enrichFolder <- paste0(outputFolder,'enrichment_analysis/')
