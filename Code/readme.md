@@ -41,8 +41,9 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li> 02/26/19: <ul>
 <li>Miscellaneous minor changes in workflow and core_functions.R</li>
 </ul>
-<li> 02/27/19: <ul>
-<li></li>
+<li> 02/28/19: <ul>
+<li>Deprecated Diff_Exp.R in favor of diffExp().</li>
+<li>Updated data files to omit bugged sample.</li>
 </li>
 </ul>
 
