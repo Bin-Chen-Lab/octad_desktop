@@ -10,6 +10,9 @@ Creators:
 Web version: octad.org
 
 
+If you use our work, please cite us.
+
+
 Cite:
 
 Pipeline for Open Cancer TherApeutic Discovery. Based on paper by Bin Chen, Phd using public data to repurpose drugs for Liver cancers.
