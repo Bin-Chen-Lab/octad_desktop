@@ -112,8 +112,9 @@ computeLINCSrges = function(dz_signature,choose_fda = F,parallel = F,maxGenes=90
                          comment.char = "!", header=T, sep="\t")
     lincs_sig_info <- lincs_sig_info %>% filter(id %in% colnames(lincs_signatures) & 
                                                   tolower(pert_iname) %in% tolower(fda_drugs$pert_iname))
+  }else{
+    lincs_sig_info <- lincs_sig_info[!duplicated(lincs_sig_info$id),]
   }
-  lincs_sig_info <- lincs_sig_info[!duplicated(lincs_sig_info$id),]
   sig.ids <- lincs_sig_info$id
   if(parallel == T){
     require(doParallel)
@@ -141,8 +142,10 @@ computeLINCSrges = function(dz_signature,choose_fda = F,parallel = F,maxGenes=90
                                          cmap_exp_signature))
     }
   }
-  #results <- data.frame(id = sig.ids, cmap_score = dz_cmap_scores)
+  dz_cmap_scores <- data.frame(id = sig.ids, cmap_score = dz_cmap_scores)
+  dz_cmap_scores$id = as.character(dz_cmap_scores$id)
   results <- left_join(dz_cmap_scores, lincs_sig_info, by = "id")
+  
   results <- results[order(results$cmap_score),] 
   return(results)
 }
