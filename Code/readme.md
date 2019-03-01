@@ -49,6 +49,7 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li>Some users were reporting errors with topLineEval() related to data.table. require(data.table) was added to this function. Awaiting feedback on this.</li>
 <li>Added functionality to computeCellLine() which outputs correlation of all cell lines considered in the analysis.</li>
 <li>Changed computeCellLine & topLineEval output directories to outputFolder,"CellLineEval/" to help clean up results.</li>
+<li>Deprecated all scripts except for core_functions.R, install_packages.R, and breast_cancer_lumA.Rmd (workflow).</li>
 </li>
 </ul>
 
