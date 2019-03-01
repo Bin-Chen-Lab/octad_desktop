@@ -51,6 +51,7 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li>Changed computeCellLine & topLineEval output directories to outputFolder,"CellLineEval/" to help clean up results.</li>
 <li>Deprecated all scripts except for core_functions.R, install_packages.R, and breast_cancer_lumA.Rmd (workflow).</li>
 <li>Desktop version now uses octad.h5 file like the web version.</li>
+<li>"mesh" and "meshes" were identical, so removed "meshes" from enrichment analysis.</li>
 </li>
 </ul>
 
