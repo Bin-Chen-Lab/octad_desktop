@@ -44,6 +44,11 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li> 02/28/19: <ul>
 <li>Deprecated Diff_Exp.R in favor of diffExp().</li>
 <li>Updated data files to omit bugged sample.</li>
+  </ul>
+<li> 03/01/19: <ul>
+<li>Some users were reporting errors with topLineEval() related to data.table. require(data.table) was added to this function. Awaiting feedback on this.</li>
+<li>Added functionality to computeCellLine() which outputs correlation of all cell lines considered in the analysis.</li>
+<li>Changed computeCellLine & topLineEval output directories to outputFolder,"CellLineEval/" to help clean up results.</li>
 </li>
 </ul>
 
