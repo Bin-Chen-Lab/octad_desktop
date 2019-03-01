@@ -50,6 +50,7 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li>Added functionality to computeCellLine() which outputs correlation of all cell lines considered in the analysis.</li>
 <li>Changed computeCellLine & topLineEval output directories to outputFolder,"CellLineEval/" to help clean up results.</li>
 <li>Deprecated all scripts except for core_functions.R, install_packages.R, and breast_cancer_lumA.Rmd (workflow).</li>
+<li>Desktop version now uses octad.h5 file like the web version.</li>
 </li>
 </ul>
 
