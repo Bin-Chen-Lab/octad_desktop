@@ -26,8 +26,8 @@ Tasks:
 - [ ] Finalize manuscript
 - [ ] Finalize octad.org
 - [x] Precompute 10k random ssGSEA scores (17k!)
-- [ ] Deprecate Diff.Exp.R in favor of diffexp() in core_functions.R
-- [ ] Edit parameter chunk with Billy's optimization code
+- [x] Deprecate Diff.Exp.R in favor of diffexp() in core_functions.R
+- [x] Edit parameter chunk with Billy's optimization code
 - [ ] Network analysis (Billy, Ben, Patrick)
 
 
