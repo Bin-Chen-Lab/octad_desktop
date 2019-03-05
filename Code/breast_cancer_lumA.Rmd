@@ -6,8 +6,8 @@ output:
     theme: united
 ---
 
-Note: Total time of this pipeline is largely dependent on whether several "optional" blocks are enabled. With all optional blocks disabled, it usually runs 15-20min. With all optional blocks enabled, it can take over an hour. The optional blocks are marked with #optional and estimated time required.
 
+The only variable which needs to be changed is "base.folder". If the user's file structure matches the example, other variables are generated automatically.
 
 ```{r setup, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 start.time <- Sys.time()
@@ -22,6 +22,7 @@ library(compiler)
 library(data.table)
 library(devtools)
 library(limma)
+library(rhdf5)
 # library(doParallel)
 
 
@@ -94,7 +95,7 @@ close(fileConn)
 Have the following files in your dataFolder:
 
 * metadata.RData  
-* dz.expr.log2.readCounts.RData [expression data]    
+* octad.h5 [expression data]    
 * cmpd_sets_chembl_targets.RData  
 * cmpd_sets_mesh.RData  
 * cmpd_sets_meshes.RData  
@@ -118,8 +119,6 @@ Have the following scripts in your CodeFolder:
   
 * [your workflow].Rmd (this Rmd is an example)  
 * core_functions.R  
-* runRGES_dz_arrangeMax.R (or runRGES_dz_arrangeMax_compiler.R or runRGES_dz_arrangeMax_doParallel.R)  
-* visualize_drug_hits.R  
 ```{r CodeFolder}
 setwd(base.folder)
 dir(CodeFolder)
@@ -132,10 +131,7 @@ DO NOT VIEW these dataframes. They're too large. Use the colnames, rownames, and
 ```{r data.load}
 setwd(base.folder)
 data.load.start <- Sys.time()
-load(paste0(dataFolder,'dz.expr.log2.readCounts.RData'))
 load(paste0(dataFolder,'encoderDF_AEmodel1.RData')) # only need to load this if you are using EncoderDF.
-#File dz.expr.log2.readCounts.RData will give you mRNA counts. 
-#the expression dataframe table is called dz.expr.log2.read.count
 
 #the phenotype dataframe is called phenoDF, loaded earlier via metadata.RData
 
@@ -207,8 +203,6 @@ normal_id = (phenoDF_Female %>% filter(data.source == 'GTEX'))$sample.id
 Define normal and case counts. Combine the normal and case counts by generating a table called dz_expr containing columns of normal and case sample IDs vs rows of genes. 
 ```{r case.load4}
 setwd(base.folder)
-# normal_counts = dz.expr.log2.read.count[,normal_id]  
-# case_counts = dz.expr.log2.read.count[,case_id]
 
 normal_counts = EncoderDF[,normal_id]
 case_counts = EncoderDF[,case_id]
@@ -237,8 +231,21 @@ control_id <- computeRefTissue(case_id = case_id, #computes ref tissue given cas
                                control_size = 50) 
 write(control_id, file = paste0(outputFolder,'control_ids.txt'))
 #this function will also generate a csv called case_normal_median_cor.csv that includes the median correlation of each normal sample.
-normal_counts = dz.expr.log2.read.count[,control_id]
-case_counts = dz.expr.log2.read.count[,case_id]
+
+rhdf5_file <- paste0(dataFolder, "octad.h5")
+#h5createFile(rhdf5_file)
+transcripts = as.character(h5read(rhdf5_file, "meta/transcripts"))
+samples = as.character(h5read(rhdf5_file, "meta/samples"))
+case_counts = h5read(rhdf5_file, "data/count", index=list(1:length(transcripts), which(samples %in% case_id)))
+colnames(case_counts) = samples[samples %in% case_id]
+rownames(case_counts) = transcripts
+case_id = samples[samples %in% case_id]
+normal_counts = h5read(rhdf5_file, "data/count", index=list(1:length(transcripts), which(samples %in% control_id)))
+colnames(normal_counts) = samples[samples %in% control_id]
+rownames(normal_counts) = transcripts
+control_id = samples[samples %in% control_id]
+H5close()
+
 dz_expr = cbind(normal_counts, case_counts)
 rm(normal_counts) # free up some memory
 
@@ -461,9 +468,16 @@ File sRGES.csv is the summarized RGES.
 ```{r sRGES}
 setwd(base.folder)
 sRGES.start <- Sys.time()
-# source(paste0(CodeFolder,'drugs_core_functions.R'))
+# source(paste0(CodeFolder,'core_functions.R'))
 #functions needed to run RGES
-source(paste0(CodeFolder,'runRGES_dz_arrangeMax_compiler.R'))
+# source(paste0(CodeFolder,'runRGES_dz_arrangeMax_compiler.R'))
+runsRGES(
+  dz_signature = dz_signature,
+  choose_fda_drugs = choose_fda_drugs,
+  parallel = F,                         # causes issues for some machines.
+  max_gene_size = max_gene_size,
+  landmark = landmark
+  )
 
 sRGES.end <- Sys.time()
 sRGES.time <- sRGES.end - sRGES.start
@@ -473,11 +487,13 @@ sRGES.time
 
 See which pathways are affected by running following code. This results the up-regulated pathways as "dz_up_sig_genes_enriched.csv" and the down-regulated pathways as "dz_dn_sig_genes_enriched.csv". 
 ```{r GEA, message=FALSE, warning=FALSE}
-#optional - duration: approximately 7 seconds
+#optional
 setwd(base.folder)
 GEA.time.start <- Sys.time()
 
-geneEnrich(dz_signature)
+visualize_dz_sig_pathway()
+visualize_dz_sig(case_id = case_id,
+                 control_id = control_id)
 
 GEA.time.stop <- Sys.time()
 GEA.time <- GEA.time.stop - GEA.time.start
@@ -490,7 +506,8 @@ Ouput the "lincs_reverse_expression.pdf' containing a heatmap showing drug hits 
 #optional - duration: approximately 5 seconds
 setwd(base.folder)
 VDH.time.start <- Sys.time()
-source(paste0(CodeFolder,'visualize_drug_hits.R'))
+# source(paste0(CodeFolder,'visualize_drug_hits.R'))
+visualize_drug_hits()
 VDH.time.stop <- Sys.time()
 VDH.time <- VDH.time.stop - VDH.time.start
 VDH.time
