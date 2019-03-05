@@ -1,0 +1,36 @@
+Normalization Parameters:
+normalize_samples
+TRUE
+
+k
+1
+
+n_topGenes
+10000
+
+DE_method
+edgeR
+
+--------------------------
+
+Disease Signature Parameters:
+log2fchange
+2
+
+padjusted
+0.001
+
+--------------------------
+
+sRGES Parameters:
+landmark
+1
+
+choose_fda_drugs
+FALSE
+
+max_gene_size
+100
+
+weight_cell_line
+FALSE
