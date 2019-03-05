@@ -52,6 +52,10 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li>Deprecated all scripts except for core_functions.R, install_packages.R, and breast_cancer_lumA.Rmd (workflow).</li>
 <li>Desktop version now uses octad.h5 file like the web version.</li>
 <li>"mesh" and "meshes" were identical, so removed "meshes" from enrichment analysis.</li>
+  </ul>
+<li> 03/05/19: <ul>
+<li>Added signature gene cluster "signature.pdf" to results.</li>
+<li>All gene enrichment results are now appropriately output to that folder.</li>
 </li>
 </ul>
 
