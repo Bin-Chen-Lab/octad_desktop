@@ -56,6 +56,10 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li> 03/05/19: <ul>
 <li>Added signature gene cluster "signature.pdf" to results.</li>
 <li>All gene enrichment results are now appropriately output to that folder.</li>
+<li>Re-implemented scores for enrichment analysis. Unknown why they were missing.</li>
+  </ul>
+<li> 03/06/19: <ul>
+<li>Changes to the runsRGES function, including requiring Rfast and lme4. Also removed transposition of cmap_exp_sig from this feature, as the dimnames did not align with names.list. Unclear how this bug arose.</li>
 </li>
 </ul>
 
