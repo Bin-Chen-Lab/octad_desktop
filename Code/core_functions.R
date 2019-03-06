@@ -330,12 +330,12 @@ runsRGES <- function(dz_signature,choose_fda_drugs = F,parallel = F,max_gene_siz
   
   
   if(!parallel){
+    require(lme4)
     require(Rfast)
     dz_cmap_scores <- NULL
     #count <- 0
     
-    cmap_exp_sig <- Rfast::colRanks(-1 * lincs_signatures, method = "min")  
-    cmap_exp_sig <- t(cmap_exp_sig)
+    cmap_exp_sig <- Rfast::colRanks(-1 * lincs_signatures, method = "max")  
     names.list <- list(rownames(lincs_signatures),colnames(lincs_signatures))
     dimnames(cmap_exp_sig) <- names.list
     
