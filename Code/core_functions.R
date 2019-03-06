@@ -330,10 +330,11 @@ runsRGES <- function(dz_signature,choose_fda_drugs = F,parallel = F,max_gene_siz
   
   
   if(!parallel){
+    require(Rfast)
     dz_cmap_scores <- NULL
     #count <- 0
     
-    cmap_exp_sig <- colRanks(-1 * lincs_signatures, method = "min")  
+    cmap_exp_sig <- Rfast::colRanks(-1 * lincs_signatures, method = "min")  
     cmap_exp_sig <- t(cmap_exp_sig)
     names.list <- list(rownames(lincs_signatures),colnames(lincs_signatures))
     dimnames(cmap_exp_sig) <- names.list
@@ -463,15 +464,16 @@ drug_enrichment <- function(sRGES,target_type){
   gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8)
   
   gsea_results = cbind(random_gsea_score[[target_type]], gsea_results)
+  gsea_summary = data.frame(score = gsea_results[,17000+1])
   
   gsea_p = apply(gsea_results, 1, function(x){
     sum(x[1:ncol(random_gsea_score[[target_type]])] > x[ncol(random_gsea_score[[target_type]])+1])/ncol(random_gsea_score[[target_type]])
   })
   
-  gsea_p = data.frame(target = names(gsea_p), p = gsea_p, padj = p.adjust(gsea_p))
+  gsea_p = data.frame(target = names(gsea_p),score = gsea_summary, p = gsea_p, padj = p.adjust(gsea_p))
   gsea_p = gsea_p[order(gsea_p$padj), ]
   # return(gsea_p)
-  write.csv(gsea_p, paste0(enrichFolder.n, "/enriched_", target_type, ".csv"))
+  write.csv(gsea_p, paste0(enrichFolder.n, "/enriched_", target_type, ".csv"),row.names = F)
   top.out.num = nrow(gsea_p[which(gsea_p$padj<=0.05),])
   if (top.out.num == 0) {
     top.out.num = 1
