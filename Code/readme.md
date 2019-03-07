@@ -60,6 +60,9 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
   </ul>
 <li> 03/06/19: <ul>
 <li>Changes to the runsRGES function, including requiring Rfast and lme4. Also removed transposition of cmap_exp_sig from this feature, as the dimnames did not align with names.list. Unclear how this bug arose.</li>
+  </ul>
+<li> 03/07/19: <ul>
+<li>Added require(limma) to drug_enrichment function.</li>
 </li>
 </ul>
 
