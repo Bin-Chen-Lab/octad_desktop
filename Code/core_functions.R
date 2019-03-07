@@ -446,7 +446,7 @@ runsRGES <- function(dz_signature,choose_fda_drugs = F,parallel = F,max_gene_siz
 ####### drug_enrichment #######
 drug_enrichment <- function(sRGES,target_type){
   require(GSVA)
-  
+  require(limma)
   enrichFolder.n <- paste0(enrichFolder,target_type,'/')
   if (!dir.exists(enrichFolder.n)) {
     dir.create(enrichFolder.n)
