@@ -32,7 +32,7 @@ https://www.gastrojournal.org/article/S0016-5085(17)30264-0/abstract
 http://www.dahshu.org/events/JournalClub/BinChen_Sep26_BigDataAnalytics.pdf
 
 
-Tasks:
+## Tasks:
 - [x] Finish code updates as of 02/20/19
 - [ ] Finalize manuscript
 - [ ] Finalize octad.org
