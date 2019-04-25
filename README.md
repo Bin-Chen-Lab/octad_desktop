@@ -11,7 +11,7 @@ Web version: octad.org
 
 # Requisite data files can be downloaded here:
 https://s3-us-west-2.amazonaws.com/chenlab-data-public/octad
-Within the parent folder for this pipeline, create a folder named "data". Place all files ***
+In the parent folder for this pipeline, create a folder named "data". Place all files from this download into this data folder.
 
 # Navigating this repositorty:
 <ul>
