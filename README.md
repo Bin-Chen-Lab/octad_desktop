@@ -23,11 +23,8 @@ Web version: octad.org
   <li>Back End Portal Chen Lab 180713 v2.pptx: Example run for Oligodendroglioma from Summer 2018.</li>
 </ul>
 
-
+# Citation
 If you use our work, please cite us.
-
-
-Cite:
 
 Pipeline for Open Cancer TherApeutic Discovery. Based on paper by Bin Chen, Phd using public data to repurpose drugs for Liver cancers.
 https://www.nature.com/articles/ncomms16022
