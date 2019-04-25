@@ -37,6 +37,5 @@ http://www.dahshu.org/events/JournalClub/BinChen_Sep26_BigDataAnalytics.pdf
 - [x] Deprecate Diff.Exp.R in favor of diffexp() in core_functions.R
 - [x] Edit parameter chunk with Billy's optimization code
 - [ ] Network analysis (Billy, Ben, Patrick)
-- [ ] Move deprecated files & folders to /deprecated/
 
 
