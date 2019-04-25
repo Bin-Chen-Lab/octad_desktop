@@ -10,7 +10,7 @@ Creators:
 Web version: octad.org
 
 # Requisite data files can be downloaded here:
-***
+https://s3-us-west-2.amazonaws.com/chenlab-data-public/octad
 
 # Navigating this repositorty:
 <ul>
