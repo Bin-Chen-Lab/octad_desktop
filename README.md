@@ -15,12 +15,8 @@ https://s3-us-west-2.amazonaws.com/chenlab-data-public/octad
 # Navigating this repositorty:
 <ul>
   <li>Code: In this folder you will find all necessary R code to run the desktop version of the drug discovery pipeline</li>
-  <li>Data/development: Deprecated</li>
-  <li>LargeScaleAnalysis: Deprecated</li>
-  <li>Subproject OCTAD paper results: Deprecated</li>
   <li>example_results: Example results from breast_cancer_lumA.Rmd (found in /Code/).</li>
-  <li>testCodes: Deprecated</li>
-  <li>Back End Portal Chen Lab 180713 v2.pptx: Example run for Oligodendroglioma from Summer 2018.</li>
+  <li>deprecated: Old code and files kept for internal reference.</li>
 </ul>
 
 # Citation
