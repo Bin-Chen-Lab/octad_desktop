@@ -12,6 +12,25 @@ Web version: octad.org
 # Requisite data files can be downloaded here:
 https://s3-us-west-2.amazonaws.com/chenlab-data-public/octad
 In the parent folder for this pipeline, create a folder named "data". Place all files from this download into this data folder.
+<ul>
+Files: 
+<li>metadata.RData</li>
+<li>CCLE_OCTAD.RData</li>
+<li>encoderDF_AEmodel1.RData</li>
+<li>random_gsea_score.RData</li>
+<li>cmpd_sets_chembl_targets.RData</li>
+<li>cmpd_sets_ChemCluster_targets.RData</li>
+<li>cmpd_sets_chembl_targets.RData</li>
+<li>cmpd_sets_mesh.RData</li>
+<li>cmpd_sets_sea_targets.RData</li>
+<li>repurposing_drugs_20170327.csv </li>
+<li>octad.h5</li>
+<li>lincs_sig_info.csv</li>
+<li>lincs_signatures_cmpd_landmark.RData</li>
+<li>lincs_signatures_cmpd_landmark_debug.RData</li>
+<li>lincs_signatures_cmpd_landmark_symbol.RData</li>
+<li>all_TCGA_CNAdata.RData</li>
+</ul>
 
 # Navigating this repositorty:
 <ul>
