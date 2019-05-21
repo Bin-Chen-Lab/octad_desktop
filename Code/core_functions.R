@@ -1,7 +1,7 @@
 # Combined DE_core_functions.R & drugs_core_functions.R
 # 02/19/19
 # from drugs_core_functions.R
-# last edit 05/06/19 by PN
+# last edit 03/01/19 by PN
 
 #### Functions ####
 ## Desktop Functions
@@ -470,7 +470,7 @@ drug_enrichment <- function(sRGES,target_type){
     sum(x[1:ncol(random_gsea_score[[target_type]])] > x[ncol(random_gsea_score[[target_type]])+1])/ncol(random_gsea_score[[target_type]])
   })
   
-  gsea_p = data.frame(target = names(gsea_p),score = gsea_summary, p = gsea_p, padj = p.adjust(gsea_p))
+  gsea_p = data.frame(target = names(gsea_p),score = gsea_summary, p = gsea_p, padj = p.adjust(gsea_p, method = 'fdr'))
   gsea_p = gsea_p[order(gsea_p$padj), ]
   # return(gsea_p)
   write.csv(gsea_p, paste0(enrichFolder.n, "/enriched_", target_type, ".csv"),row.names = F)
