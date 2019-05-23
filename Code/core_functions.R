@@ -1384,7 +1384,8 @@ visualize_dz_sig <- function(case_id, control_id){
   colnames(df) <-c("type")
   mycol <- colorpanel(100,"blue","white","red")
   set.seed(0)
-  expr = t(scale(t(log(expr))))
+  # expr = t(scale(t(log(expr)))) # inconsistent but prettier. Sometimes produces NaNs, which kmeans (pheatmap) can't deal with.
+  expr = t(scale(t(log2(expr +1)))) # uglier but reliable
   pheatmap(expr, cluster_rows=T, show_rownames=F,show_colnames=F,col=mycol,
            cluster_cols=F, annotation_col=df, file= paste0(outputFolder, "enrichment_analysis/GeneEnrichment/signature.pdf"))
   
