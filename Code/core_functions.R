@@ -461,7 +461,7 @@ drug_enrichment <- function(sRGES,target_type){
   
   rgess = matrix(-1*drug_pred$sRGES, ncol = 1)
   rownames(rgess) = drug_pred$pert_iname
-  gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8)
+  gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8,ssgsea.norm = FALSE)
   
   gsea_results = cbind(random_gsea_score[[target_type]], gsea_results)
   gsea_summary = data.frame(score = gsea_results[,17000+1])
