@@ -64,5 +64,9 @@ Please contact Patrick: patrick.newbury@hc.msu.edu with any issues
 <li> 03/07/19: <ul>
 <li>Added require(limma) to drug_enrichment function.</li>
 </li>
+<li> 05/29/19: <ul>
+<li>Changes to drug_enrichment function: ssgsea.norm set to FALSE. p.padjust method changed to 'fdr'.</li>
+<li>Updated random_gsea_score.RData, cmpd_sets_sea_targets.RData, & cmpd_sets_chembl_targets.RData</li>
+  </ul>
 </ul>
 
