@@ -25,7 +25,7 @@ source("https://bioconductor.org/biocLite.R")
 packages <- c('readxl','rhdf5','plotly','doParallel','foreach','plyr','RColorBrewer','ggplot2','pheatmap','bindrcpp','usethis','devtools',
                    'data.table','GSVA','RUVSeq','edgeR','limma','EDASeq','ShortRead','GenomicAlignments','SummarizedExperiment',
                    'DelayedArray','matrixStats','Rsamtools','GenomicRanges','GenomeInfoDb','Biostrings','XVector','IRanges',
-                   'S4Vectors','BiocParallel','Biobase','BiocGenerics','dplyr','gplots')
+                   'S4Vectors','BiocParallel','Biobase','BiocGenerics','dplyr','gplots','Rfast')
 
 # Function to check whether the package is installed
 InsPack <- function(pack)
