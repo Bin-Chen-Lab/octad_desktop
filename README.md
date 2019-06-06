@@ -51,7 +51,7 @@ http://www.dahshu.org/events/JournalClub/BinChen_Sep26_BigDataAnalytics.pdf
 ## Tasks:
 - [x] Finish code updates as of 02/20/19
 - [ ] Finalize manuscript
-- [ ] Finalize octad.org
+- [x] Finalize octad.org
 - [x] Precompute 10k random ssGSEA scores (17k!)
 - [x] Deprecate Diff.Exp.R in favor of diffexp() in core_functions.R
 - [x] Edit parameter chunk with Billy's optimization code
