@@ -12,8 +12,9 @@ The only variable which needs to be changed is "base.folder". If the user's file
 ```{r setup, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 start.time <- Sys.time()
 # knitr::opts_knit$set(root.dir = '../..')
-base.folder <- '/Users/newburyp/Documents/Chen Lab/Projects/desktop_pipeline/desktop_pipeline_condensed/' # should be set to installation parent folder
+base.folder <- '~/octad_desktop/' # should be set to installation parent folder
 setwd(base.folder)
+
 library(dplyr)
 library(ggplot2)
 library("RUVSeq")
@@ -26,22 +27,22 @@ library(rhdf5)
 # library(doParallel)
 
 
-enableJIT(3)
+#enableJIT(3)
 
 
-iteration = 1 # don't touch this. Below automatically increases "iteration" upon detection of previous runs.
-for (i in 1:length(dir(normalizePath('./results/')))) {
-if (dir.exists(paste0(normalizePath(paste0('./results/results_',Sys.Date(),'_',i,'/')),'/'))==TRUE) 
-  iteration = iteration + 1
-}
+# iteration = 1 # don't touch this. Below automatically increases "iteration" upon detection of previous runs.
+# for (i in 1:length(dir(normalizePath('./results/')))) {
+# if (dir.exists(paste0(normalizePath(paste0('./results/results_',Sys.Date(),'_',i,'/')),'/'))==TRUE) 
+#   iteration = iteration + 1
+# }
 
-outputFolder = paste0(normalizePath(paste0('./results/results_',Sys.Date(),'_',iteration,'/')),'/')
+outputFolder = '~/octad_desktop/results/brca_mutant_example/'
 if (!dir.exists(outputFolder)) {
   dir.create(outputFolder)
 }
-outputFolder = paste0(normalizePath(paste0('./results/results_',Sys.Date(),'_',iteration,'/')),'/')
-dataFolder = paste0(normalizePath('./data/'),'/')
-CodeFolder = paste0(normalizePath('./code/'),'/')
+#outputFolder = paste0(normalizePath(paste0('./results/results_',Sys.Date(),'_',iteration,'/')),'/')
+dataFolder = '~/octad_desktop/data/'
+CodeFolder = '~/octad_desktop/code/'
 dataFolder
 CodeFolder
 
@@ -67,7 +68,7 @@ normalize_samples = T
 k = 1
 n_topGenes = 10000
 #this demo sample set does not have too much genes. The usual default for n_topGenes = 10000. Set this higher if you think there are more significant genes
-DE_method = 'edgeR' # Other choice is 'limma' for DE_method.
+DE_method = 'edgeR' # Other choice is 'limma' 'DESeq'
 
 
 # disease signature params:
@@ -108,28 +109,18 @@ Have the following files in your dataFolder:
 * repurposing_drugs_20170327.csv  
 * metadata.RData  
 
-```{r dataFolder, results='hide'}
-setwd(base.folder)
-dir(dataFolder)
-#check to make sure you have these files
-```
 ***
 
 Have the following scripts in your CodeFolder:  
   
 * [your workflow].Rmd (this Rmd is an example)  
 * core_functions.R  
-```{r CodeFolder}
-setwd(base.folder)
-dir(CodeFolder)
-#check to make sure you have these files
-```
+
 ***
 
 Load the dataframes that contain your case and normal reference tissues.  
 DO NOT VIEW these dataframes. They're too large. Use the colnames, rownames, and dim functions. Otherwise, you may crash.
 ```{r data.load}
-setwd(base.folder)
 data.load.start <- Sys.time()
 load(paste0(dataFolder,'encoderDF_AEmodel1.RData')) # only need to load this if you are using EncoderDF.
 
@@ -139,20 +130,22 @@ data.load.end  <- Sys.time()
 data.load.time <- data.load.end - data.load.start
 data.load.time
 ```
-***
+
+***Read in Mutant data
+```{r}
+mutDF = read.csv(paste0(dataFolder,'tcga.met500.long.format.9.20.2018.csv'),
+                 stringsAsFactors = F)
+
+```
 
 ##Select Cases##    
 ```{r case.load1}
-setwd(base.folder)
+#setwd(base.folder)
 case.load.start <- Sys.time()
 
-# lumA_over50    <- breastpam50 %>% filter(LumA > 0.5)
 phenoDF_case   <- phenoDF %>% filter(cancer == 'Breast Invasive Carcinoma', sample.type != 'adjacent', data.source == 'TCGA', gender == 'Female')
-allbrcaids     <- phenoDF_case$sample.id
-# lumA_onlydz    <- lumA_over50 %>% filter(sample.id %in% allbrcaids)
-mut_only       <- (mutant.df.wide %>% filter(TP53 == 1))$Sample.id # change "MYC" to your mutation of interest
-mut_onlydz     <- intersect(mut_only,allbrcaids)
-phenoDF_case   <- filter(phenoDF,sample.id %in% as.character(mut_onlydz))
+mut_only       <- (mutDF %>% filter(gene == 'PIK3CA'))$sample.id # change gene to your mutation of interest
+phenoDF_case <- phenoDF_case %>% filter(sample.id %in% mut_only)
 
 # Example where we subset phenoDF to only include samples from certain sites of interest. Useful when computeRefTissue is unlikely to work.
 # skin sample example
@@ -176,7 +169,7 @@ phenoDF_case   <- filter(phenoDF,sample.id %in% as.character(mut_onlydz))
 Create a list with sample IDs for the cancer of interest (case). 
 ```{r case.load2}
 case_id <- phenoDF_case$sample.id
-write(case_id, file = paste0(outputFolder,'case_ids.txt'))
+write.csv(phenoDF_case, file = paste0(outputFolder,'case_ids.csv'))
 ```
 Results: **`r nrow(phenoDF_case)`** case IDs.  
 ***
@@ -187,7 +180,9 @@ Identify the sample.id of normal tissues in the phenoDF. They should be from the
 ```{r case.load3}
 setwd(base.folder)
 phenoDF_Female <- phenoDF %>% filter(gender == "Female")
-normal_id = (phenoDF_Female %>% filter(data.source == 'GTEX'))$sample.id
+normal_id = (phenoDF_Female %>% filter(data.source == 'GTEX',biopsy.site== 'BREAST - MAMMARY TISSUE'))$sample.id
+
+#filter the biopsy.site to compare only the tissues in breast
 
 # selecting pool of normal samples with similar (but not identical) names: 
 # normal_id = (phenoDF_skin %>% filter(data.source == 'GTEX'))$sample.id
@@ -204,7 +199,6 @@ normal_id = (phenoDF_Female %>% filter(data.source == 'GTEX'))$sample.id
 
 Define normal and case counts. Combine the normal and case counts by generating a table called dz_expr containing columns of normal and case sample IDs vs rows of genes. 
 ```{r case.load4}
-setwd(base.folder)
 
 normal_counts = EncoderDF[,normal_id]
 case_counts = EncoderDF[,case_id]
@@ -225,7 +219,6 @@ Results: **`r nrow(dz_expr)`** rows of genes vs **`r ncol(dz_expr)`** total colu
 Define your control ID--the control samples you are comparing your case with. The computeRefTussue function will match similar normal samples to your chosen cancer.  This function is based on mRNA data of high varying expression across all tissues.  
 You will generate **50** control samples, unless you state a different control_size.
 ```{r case.load6}
-setwd(base.folder)
 
 control_id <- computeRefTissue(case_id = case_id, #computes ref tissue given case_id, normal_id chr vectors
                                normal_id = normal_id,
@@ -233,6 +226,12 @@ control_id <- computeRefTissue(case_id = case_id, #computes ref tissue given cas
                                control_size = 50) 
 write(control_id, file = paste0(outputFolder,'control_ids.txt'))
 #this function will also generate a csv called case_normal_median_cor.csv that includes the median correlation of each normal sample.
+normCor = read.csv(paste0(outputFolder,'case_normal_median_cor.csv'),stringsAsFactors = F)
+normCor = normCor %>% inner_join(phenoDF,by='sample.id')
+```
+
+***
+```{r}
 
 rhdf5_file <- paste0(dataFolder, "octad.h5")
 #h5createFile(rhdf5_file)
@@ -251,16 +250,12 @@ H5close()
 dz_expr = cbind(normal_counts, case_counts)
 rm(normal_counts) # free up some memory
 
-case.load.end <- Sys.time()
 
-case.load.time <- case.load.end - case.load.start
-case.load.time
+
 ```
-***
 
 Check the tissue location of where the control samples are from.
 ```{r verify1}
-setwd(base.folder)
 (phenoDF %>% filter(sample.id %in% control_id) %>% select(biopsy.site) %>% table())
 ```
 If I want, I can exclude certain samples.
@@ -272,14 +267,9 @@ If I want, I can exclude certain samples.
 To see how similar the controls are to the case samples, get the correlations of mRNA expressions between each of the normal samples and the set of cases. The list is in descending order.
 ```{r verify2}
 setwd(base.folder)
-normal_median_cor = read.csv(paste0(outputFolder,'case_normal_median_cor.csv'),stringsAsFactors = F)
-normal_median_cor <- normal_median_cor %>% arrange(desc(cor))
+normCor <- normCor %>% arrange(desc(cor))
 
-normal_median_cor <-left_join(normal_median_cor, 
-  phenoDF %>% select(sample.id, biopsy.site), 
-  by = "sample.id")
-
-head(normal_median_cor)
+head(normCor)
 ```
 ***
 
@@ -288,8 +278,7 @@ Goal is to sort the correlation order based on tissue type.
 
 I) Find median correlation for each primary site
 ```{r verify3}
-setwd(base.folder)
-(reference_tissue_rank <- normal_median_cor %>% 
+(reference_tissue_rank <- normCor %>% 
   group_by(biopsy.site) %>% summarise(medianCor = median(cor)) %>% 
   ungroup())
 ```
@@ -304,20 +293,19 @@ setwd(base.folder)
 III) Sort tissue from high to low correlation. Top ten shown.
 ```{r verify5}
 setwd(base.folder)
-normal_median_cor$ref <- factor(normal_median_cor$biopsy.site, levels = top_refs$biopsy.site)
-levels(normal_median_cor$ref)[1:10]
+normCor$ref <- factor(normCor$biopsy.site, levels = top_refs$biopsy.site)
+levels(normCor$ref)[1:10]
 (top_refs = reference_tissue_rank %>% arrange(desc(medianCor)))
-normal_median_cor$ref <- factor(normal_median_cor$biopsy.site, levels = top_refs$biopsy.site)
-normal_median_cor$control <- NA
-normal_median_cor$control[1:50] <- 'control'
-top10 = levels(normal_median_cor$ref)[1:10]
+normCor$ref <- factor(normCor$biopsy.site, levels = top_refs$biopsy.site)
+normCor$control <- NA
+normCor$control[1:50] <- 'control'
+top10 = levels(normCor$ref)[1:10]
 ```
 
 IV) Graph tissue type vs mRNA correlation
 ```{r fig1, fig.height=9, fig.align= "center"}
-setwd(base.folder)
 
-p <- ggplot(normal_median_cor, aes(ref, cor))
+p <- ggplot(normCor, aes(ref, cor))
 p +   geom_boxplot(color='grey', notch=F, outlier.shape = NA) + 
   geom_jitter(aes(alpha=1/100), show.legend = F) + 
   theme_bw() + 
@@ -328,7 +316,7 @@ p +   geom_boxplot(color='grey', notch=F, outlier.shape = NA) +
   axis.text.y = element_text(size = 11), axis.title = element_text(size = 11), 
   plot.margin = margin(l=0))
 
-p <- ggplot(normal_median_cor %>% filter(ref %in% top10), aes(ref, cor))
+p <- ggplot(normCor %>% filter(ref %in% top10), aes(ref, cor))
 p +   geom_boxplot(color='grey', notch=F, outlier.shape = NA) + geom_jitter(aes(color=control)) +
   #geom_jitter(aes(alpha=1/100), show.legend = F) + 
   theme_bw() + 
@@ -369,7 +357,6 @@ tsne.time
 ##Optional: Selecting Another Set of Reference Samples##  
 ***
 ```{r referencesample2}
-setwd(base.folder)
 #optional
 #2a. select normals based on the top site computed e.g. if brain was top site select all brain as controls
 #2b. select normals based on the top primary site
@@ -396,29 +383,9 @@ Variables needed:
 Read csv with gene information and read Diff_Exp.R script.  
 This will output 3 files: "computedEmpGenes.csv", "DE_genes.csv", and  "highExpGenes.csv".  
 ```{r DE2, message=FALSE, warning=FALSE}
-setwd(base.folder)
 
 DE.start <- Sys.time()
 
-########## To evaluate other n_topGenes settings ##########
-# for(i in c(1000,5000,15000)){
-# n_topGenesLoop = i # default 10000
-# DE_method = 'edgeR' # Default 'edgeR'. Other choice is 'limma'
-# # logging parameters
-# write(paste0("n_topGenes = ",n_topGenesLoop), file = paste0(outputFolder,"parameters.txt"),append = TRUE)
-# fileConn<-file(paste0(outputFolder,"parameters.txt"))
-# close(fileConn)
-# res = diffExp(case_id = case_id,
-#         control_id = control_id,
-#         expSet = dz_expr,
-#         normalize_samples = normalize_samples,
-#         k=k,
-#         n_topGenes=n_topGenesLoop,
-#         DE_method=DE_method
-#         )
-# res_geneinfo <- left_join(res, merged_gene_info, by=c('identifier'='ensembl'))
-# write.csv(res,file=paste0(outputFolder,'res_geneinfo_',"n_topGenes_",n_topGenesLoop,'.csv'))
-# }
 
 # important that the below res is generated LAST.
 res = diffExp(case_id = case_id,
@@ -441,7 +408,6 @@ DE.time
 
 Get the disease signature.
 ```{r dz_signature}
-setwd(base.folder)
 dz_signature <- res %>% filter(padj < padjusted, abs(log2FoldChange)>log2fchange)
 #filter out res df to get dz sigs
 #Term res refers to the results table that is generated from the Diff_Exp. R script.
@@ -452,17 +418,13 @@ head(dz_signature)
 
 Combine the res table with the Ensembl table to generate a differential expression results table with gene information.
 ```{r res_geneinfo}
-setwd(base.folder)
 res_geneinfo <- left_join(res, merged_gene_info, by=c('identifier'='ensembl'))
-
-
 write.csv(res_geneinfo,file=paste0(outputFolder,'res_geneinfo.csv'))
 ```
 ***
 
 Generate table for disease signature
 ```{r dz_signature2}
-setwd(base.folder)
 dz_signature <- dz_signature %>% left_join(ensembl_info %>% select(gene,ensembl,chrom,strand),
                                            by=c('identifier'='ensembl'))
 dim(dz_signature)
@@ -544,8 +506,8 @@ setwd(base.folder)
 enrich.time.start <- Sys.time()
 
 source(paste0(CodeFolder,'core_functions.R'))
-targets = c('chembl_targets','mesh','sea_targets','ChemCluster') # include as many or few as you prefer. 
-# targets = c('chembl_targets','mesh')
+#targets = c('chembl_targets','mesh','sea_targets','ChemCluster') # include as many or few as you prefer. 
+targets = c('mesh')
 
 
 enrichFolder <- paste0(outputFolder,'enrichment_analysis/')
