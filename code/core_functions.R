@@ -842,10 +842,7 @@ compEmpContGenes <- function(counts, coldata, n_topGenes = 5000){
 }
 
 ####### diffExp #######
-<<<<<<< HEAD
-=======
 #modify v2 version, suport edgeR, Limma and deseq 2 now.
->>>>>>> 755324654920366cc1e93efc406aa0b3b6fb2894
 diffExp <- function(case_id='',control_id='',expSet=dz_expr,
                     normalize_samples=T,
                     k=1,
@@ -998,7 +995,6 @@ diffExp <- function(case_id='',control_id='',expSet=dz_expr,
   
 }
 
-<<<<<<< HEAD
 # diffExp_old <- function(case_id='',control_id='',expSet=dz_expr,
 #                     normalize_samples=T,
 #                     k=1,
@@ -1067,7 +1063,6 @@ diffExp <- function(case_id='',control_id='',expSet=dz_expr,
 #   res = res %>% select(identifier,everything())
 #   return(res)
 # }
-=======
 ####### diffExp #######
 diffExp_v1 <- function(case_id='',control_id='',expSet=dz_expr,
                     normalize_samples=T,
@@ -1135,7 +1130,6 @@ diffExp_v1 <- function(case_id='',control_id='',expSet=dz_expr,
   res = res %>% select(identifier,everything())
   return(res)
 }
->>>>>>> 755324654920366cc1e93efc406aa0b3b6fb2894
 
 # new one with limma & DESeq2
 # note: normalize_samples only works with edgeR right now.
