@@ -1272,9 +1272,121 @@ diffExp_v2 <- function(case_id='',control_id='',expSet=dz_expr,
 
 
 ####### geneEnrich #######
+
+
+#' geneEnrichOld <- function(dz_signature, 
+#'                        db.list=c( "KEGG_2016",  "GO_Biological_Process_2017", "GO_Cellular_Component_2017"),
+#'                        suffix=''){
+#'   #adapted from https://github.com/compbiomed/enrichR
+#'   #edited for use by Billy Zeng, UCSF, Anita Wen UCD
+#'   #' Perform functional enrichment on a set of genes.
+#'   #' 
+#'   #' This function interacts with Enrichr's REST API in order to perform functional enrichment of a single
+#'   #' set of genes, for a set of specified databases which are already fronted by Enrichr.
+#'   #' Databases are specified as seen in the web interface, with underscores for spaces
+#'   #' (e.g. "WikiPathways_2016", "KEGG_2016", "GO_Biological_Process"). There's no way to query Enrichr
+#'   #' to get these database names, so they can't be provided as options. You'll just have to guess. Sorry :/
+#'   #' 
+#'   #' @param gene.list a list of gene symbols
+#'   #' @param databases a list of Enrichr-fronted databases, as mentioned above
+#'   #' @param fdr.cutoff An FDR (adjusted p-value) threshold by which to limit the list of enriched pathways
+#'   #' @keywords functional enrichment Enrichr
+#'   #' @export
+#'   
+#'   enrichGeneList <- function (gene.list, databases=db.list, fdr.cutoff=NULL) {
+#'     ######Step 1: Post gene list to EnrichR
+#'     req.body <- list(list=paste(gene.list, collapse="\n"))
+#'     post.req <- httr::POST("http://amp.pharm.mssm.edu/Enrichr/enrich", encode="multipart", body=I(req.body))
+#'     
+#'     #TODO: Real error handling..
+#'     if (!grepl("success", httr::http_status(post.req)$category, ignore.case=T)) stop("Posting gene list to EnrichR failed")
+#'     
+#'     ######Step 2: Get results from posted gene list
+#'     database.enrichments <- list()
+#'     for (idx in 1:length(databases)) { 
+#'       database <- databases[idx]
+#'       get.req <- httr::GET(paste("http://amp.pharm.mssm.edu/Enrichr/enrich?backgroundType=", database, sep=""))
+#'       if (!grepl("success", httr::http_status(get.req)$category, ignore.case=T)) stop("Retrieving results from EnrichR failed")
+#'       
+#'       response.content <- mungeResponseContent(httr::content(get.req)[[database]])
+#'       
+#'       if (length(response.content) > 1) {
+#'         database.res <- data.table::rbindlist(response.content)
+#'         database.res[, 1] <- rep(database, nrow(database.res))
+#'         database.enrichments[[idx]] <- database.res[, paste("V", c(1, 2, 3, 7, 5,6), sep=""), with=F]
+#'       }
+#'     }
+#'     
+#'     query.results <- as.data.frame(data.table::rbindlist(database.enrichments))
+#'     colnames(query.results) <- c("database", "category", "pval", "qval","Combined Score" ,"genes")
+#'     
+#'     if (!is.null(fdr.cutoff)) {
+#'       query.results <- query.results[query.results$qval < fdr.cutoff, ]
+#'     }
+#'     
+#'     query.results
+#'   }
+#'   
+#'   
+#'   
+#'   #' Munge the Enrichr API response so it'll squeeze neatly (if untidily) into a dataframe.
+#'   #' 
+#'   #' The response from the Enrichr API is a list of lists, where each nested list item represents an enriched
+#'   #' category. The 6th item of each category (i.e. response.content[[category.idx]][[6]]) corresponds to the 
+#'   #' genes that overlapped with the gene set behind that category. This function bascically collapses that list of 
+#'   #' genes into a single string. 
+#'   #' 
+#'   #' I'm sorry you ever had to look at this.
+#'   #' 
+#'   #' @param response.content result of calling httr::content on the GET request to the Enrichr API, after submitting a list for enrichment.
+#'   #' 
+#'   mungeResponseContent <- function (response.content) {
+#'     munged.content <- response.content
+#'     if (length(response.content) == 0) return(NA)
+#'     
+#'     for (idx in 1:length(response.content)) {
+#'       munged.content[[idx]][[6]] <- paste(munged.content[[idx]][[6]], collapse=",")
+#'     }
+#'     
+#'     munged.content
+#'   }
+#'   
+#'   
+#'   #munged.content not found
+#' 
+#'   enrichFolder <- paste0(outputFolder,'enrichment_analysis/')
+#'   if (!dir.exists(enrichFolder)) {
+#'     dir.create(enrichFolder)
+#'   }
+#'   enrichFolder.n <- paste0(enrichFolder,'GeneEnrichment','/')
+#'   if (!dir.exists(enrichFolder.n)) {
+#'     dir.create(enrichFolder.n)
+#'   }
+#'   
+#'   
+#'   databases = db.list
+#'   fdr.cutoff = 0.25
+#'   
+#'   up.genes = dz_signature$Symbol[dz_signature$log2FoldChange > 0]
+#'   if(length(up.genes)>0){
+#'     (up.gene.res = enrichGeneList(up.genes[1:min(300, length(up.genes))], databases, fdr.cutoff))
+#'     (up.gene.res = up.gene.res[order(up.gene.res$database, up.gene.res$p), ])
+#'     write.csv(up.gene.res, paste0(enrichFolder.n, "/dz_up_sig_genes_enriched", suffix,".csv"))  
+#'   }
+#'   dn.genes = dz_signature$Symbol[dz_signature$log2FoldChange < 0]
+#'   if(length(dn.genes)>0){
+#'     dn.gene.res = enrichGeneList(dn.genes[1:min(300, length(dn.genes))], databases, fdr.cutoff)
+#'     dn.gene.res = dn.gene.res[order(dn.gene.res$database, dn.gene.res$p), ]
+#'     write.csv(dn.gene.res, paste0(enrichFolder.n, "/dz_down_sig_genes_enriched", suffix,".csv"))  
+#'   }
+#'   up.gene.res$dir = 'up'
+#'   dn.gene.res$dir = 'dn'
+#'   res = rbind(up.gene.res,dn.gene.res)
+#' }
+#' 
 geneEnrich <- function(dz_signature, 
-                       db.list=c( "KEGG_2016",  "GO_Biological_Process_2017", "GO_Cellular_Component_2017"),
-                       suffix=''){
+                          db.list=c( "KEGG_2016",  "GO_Biological_Process_2017", "GO_Cellular_Component_2017"),
+                          suffix=''){
   #adapted from https://github.com/compbiomed/enrichR
   #edited for use by Billy Zeng, UCSF, Anita Wen UCD
   #' Perform functional enrichment on a set of genes.
@@ -1287,71 +1399,40 @@ geneEnrich <- function(dz_signature,
   #' 
   #' @param gene.list a list of gene symbols
   #' @param databases a list of Enrichr-fronted databases, as mentioned above
-  #' @param fdr.cutoff An FDR (adjusted p-value) threshold by which to limit the list of enriched pathways
   #' @keywords functional enrichment Enrichr
   #' @export
   
   enrichGeneList <- function (gene.list, databases=db.list, fdr.cutoff=NULL) {
     ######Step 1: Post gene list to EnrichR
     req.body <- list(list=paste(gene.list, collapse="\n"))
-    post.req <- httr::POST("http://amp.pharm.mssm.edu/Enrichr/enrich", encode="multipart", body=I(req.body))
-    
-    #TODO: Real error handling..
-    if (!grepl("success", httr::http_status(post.req)$category, ignore.case=T)) stop("Posting gene list to EnrichR failed")
-    
-    ######Step 2: Get results from posted gene list
-    database.enrichments <- list()
-    for (idx in 1:length(databases)) { 
-      database <- databases[idx]
-      get.req <- httr::GET(paste("http://amp.pharm.mssm.edu/Enrichr/enrich?backgroundType=", database, sep=""))
-      if (!grepl("success", httr::http_status(get.req)$category, ignore.case=T)) stop("Retrieving results from EnrichR failed")
-      
-      response.content <- mungeResponseContent(httr::content(get.req)[[database]])
-      
-      if (length(response.content) > 1) {
-        database.res <- data.table::rbindlist(response.content)
-        database.res[, 1] <- rep(database, nrow(database.res))
-        database.enrichments[[idx]] <- database.res[, paste("V", c(1, 2, 3, 7, 5,6), sep=""), with=F]
-      }
+    post.req <- httr::POST("http://amp.pharm.mssm.edu/Enrichr/addList", 
+                           encode="multipart", 
+                           body=I(req.body))
+    results = data.frame(matrix(ncol = 6,nrow=0))
+    colnames(results) = c('database',
+                          'category',
+                          'pval_adj',
+                          'Odds_Ratio',
+                          'Combined Score',
+                          'Genes')
+    for(db in db.list){
+      getEnrich = GET('http://amp.pharm.mssm.edu/Enrichr/export',
+                      query=list(userListId = ids$userListId,
+                                 filename='example',
+                                 backgroundType='KEGG_2016'))
+      query.results <- readr::read_tsv(content(getEnrich,type='text/tsv'))
+      query.results$database = db
+      query.results = query.results %>% select(database,
+                                               category=Term,
+                                               pval_adj=`Adjusted P-value`,
+                                               Odds_Ratio = `Odds Ratio`,
+                                               `Combined Score`,
+                                              Genes)
+      results = rbind(results,query.results)
     }
-    
-    query.results <- as.data.frame(data.table::rbindlist(database.enrichments))
-    colnames(query.results) <- c("database", "category", "pval", "qval","Combined Score" ,"genes")
-    
-    if (!is.null(fdr.cutoff)) {
-      query.results <- query.results[query.results$qval < fdr.cutoff, ]
-    }
-    
-    query.results
+    results
   }
   
-  
-  
-  #' Munge the Enrichr API response so it'll squeeze neatly (if untidily) into a dataframe.
-  #' 
-  #' The response from the Enrichr API is a list of lists, where each nested list item represents an enriched
-  #' category. The 6th item of each category (i.e. response.content[[category.idx]][[6]]) corresponds to the 
-  #' genes that overlapped with the gene set behind that category. This function bascically collapses that list of 
-  #' genes into a single string. 
-  #' 
-  #' I'm sorry you ever had to look at this.
-  #' 
-  #' @param response.content result of calling httr::content on the GET request to the Enrichr API, after submitting a list for enrichment.
-  #' 
-  mungeResponseContent <- function (response.content) {
-    munged.content <- response.content
-    if (length(response.content) == 0) return(NA)
-    
-    for (idx in 1:length(response.content)) {
-      munged.content[[idx]][[6]] <- paste(munged.content[[idx]][[6]], collapse=",")
-    }
-    
-    munged.content
-  }
-  
-  
-  #munged.content not found
-
   enrichFolder <- paste0(outputFolder,'enrichment_analysis/')
   if (!dir.exists(enrichFolder)) {
     dir.create(enrichFolder)
@@ -1363,18 +1444,17 @@ geneEnrich <- function(dz_signature,
   
   
   databases = db.list
-  fdr.cutoff = 0.25
-  
+
   up.genes = dz_signature$Symbol[dz_signature$log2FoldChange > 0]
   if(length(up.genes)>0){
-    (up.gene.res = enrichGeneList(up.genes[1:min(300, length(up.genes))], databases, fdr.cutoff))
-    (up.gene.res = up.gene.res[order(up.gene.res$database, up.gene.res$p), ])
+    (up.gene.res = enrichGeneList(up.genes[1:min(300, length(up.genes))], databases))
+    (up.gene.res = up.gene.res[order(up.gene.res$database, up.gene.res$pval_adj), ])
     write.csv(up.gene.res, paste0(enrichFolder.n, "/dz_up_sig_genes_enriched", suffix,".csv"))  
   }
   dn.genes = dz_signature$Symbol[dz_signature$log2FoldChange < 0]
   if(length(dn.genes)>0){
-    dn.gene.res = enrichGeneList(dn.genes[1:min(300, length(dn.genes))], databases, fdr.cutoff)
-    dn.gene.res = dn.gene.res[order(dn.gene.res$database, dn.gene.res$p), ]
+    dn.gene.res = enrichGeneList(dn.genes[1:min(300, length(dn.genes))], databases)
+    dn.gene.res = dn.gene.res[order(dn.gene.res$database, dn.gene.res$pval_adj), ]
     write.csv(dn.gene.res, paste0(enrichFolder.n, "/dz_down_sig_genes_enriched", suffix,".csv"))  
   }
   up.gene.res$dir = 'up'
