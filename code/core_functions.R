@@ -1401,13 +1401,15 @@ geneEnrich <- function(dz_signature,
   #' @param databases a list of Enrichr-fronted databases, as mentioned above
   #' @keywords functional enrichment Enrichr
   #' @export
-  
+  require(httr)
+  require(dplyr)
   enrichGeneList <- function (gene.list, databases=db.list, fdr.cutoff=NULL) {
     ######Step 1: Post gene list to EnrichR
     req.body <- list(list=paste(gene.list, collapse="\n"))
     post.req <- httr::POST("http://amp.pharm.mssm.edu/Enrichr/addList", 
                            encode="multipart", 
                            body=I(req.body))
+    ids = content(post.req,type='application/json')
     results = data.frame(matrix(ncol = 6,nrow=0))
     colnames(results) = c('database',
                           'category',
