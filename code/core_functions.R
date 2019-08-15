@@ -1448,6 +1448,8 @@ geneEnrich <- function(dz_signature,
   databases = db.list
 
   up.genes = dz_signature$Symbol[dz_signature$log2FoldChange > 0]
+  dn.genes = dz_signature$Symbol[dz_signature$log2FoldChange < 0]
+  
   if(length(up.genes)>0){
     (up.gene.res = enrichGeneList(up.genes[1:min(300, length(up.genes))], databases))
     (up.gene.res = up.gene.res[order(up.gene.res$database, up.gene.res$pval_adj), ])
