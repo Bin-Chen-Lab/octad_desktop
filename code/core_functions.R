@@ -449,7 +449,7 @@ runsRGES <- function(dz_signature,choose_fda_drugs = F,parallel = F,max_gene_siz
 }
 
 ####### drug_enrichment #######
-drug_enrichment <- function(sRGES,target_type){
+drug_enrichment <- function(sRGES,target_type,enrichFolder='/enrichFolder/'){
   require(GSVA)
   require(limma)
   enrichFolder.n <- paste0(enrichFolder,target_type,'/')
@@ -459,6 +459,7 @@ drug_enrichment <- function(sRGES,target_type){
   
   #load random scores
   load(paste0(dataFolder,"cmpd_sets_", target_type, ".RData"))
+  load(paste0(dataFolder,'random_gsea_score.RData'))
   cmpdSets = cmpd_sets$cmpd.sets
   names(cmpdSets) = cmpd_sets$cmpd.set.names
   
@@ -509,6 +510,48 @@ drug_enrichment <- function(sRGES,target_type){
     write.csv(clusterdf,file=paste0(enrichFolder.n,'drugstructureclusters.csv'),row.names = F)
     }
   }
+}
+
+drug_enrichment.meshZscores <- function(sRGES,enrichFolder='/enrichFolder/'){
+  require(GSVA)
+  require(limma)
+  if (!dir.exists(enrichFolder)) {
+    dir.create(enrichFolder)
+  }
+  enrichFolder.n <- paste0(enrichFolder,'/mesh_z_scores/')
+  if (!dir.exists(enrichFolder.n)) {
+    dir.create(enrichFolder.n)
+  }
+  load(paste0(dataFolder,'/cmpd_sets_mesh.RData'))
+  load(paste0(dataFolder,'/random_gsea/random_gsea_score_mesh_dist2.RData'))
+  cmpdSets = cmpd_sets$cmpd.sets
+  names(cmpdSets) = cmpd_sets$cmpd.set.names
+  drug_pred = sRGES
+  rgess = matrix(-1*((drug_pred$sRGES)), ncol = 1)
+  rownames(rgess) = drug_pred$pert_iname
+  rand_rgess = as.matrix(sample(rgess,length(rgess),replace = F))
+  rownames(rand_rgess) = rownames(rgess)
+  gsea_results = gsva(rgess, cmpdSets, method = "ssgsea",  parallel.sz=8,  ssgsea.norm=F)
+  rand_results = gsva(rand_rgess, cmpdSets, method = "ssgsea",  parallel.sz=8,  ssgsea.norm=F)
+  
+  #convert to z scores such that scores from different conditions are comparable.
+  #caveats: random ssGSEA scores of a few targets are not normally distributed (likely these targets with a couple of ligands)
+  gsea_z_score = data.frame(target = row.names(gsea_results),GSVAscore = gsea_results,GSVArandscore = rand_results)
+  random_gsea_score_dist$target = as.character(random_gsea_score_dist$target)
+  gsea_z_score$target = as.character(gsea_z_score$target)
+  
+  gsea_z_score = gsea_z_score %>% left_join(random_gsea_score_dist, by = 'target')
+  gsea_z_score$z_score = (gsea_z_score$GSVAscore - gsea_z_score$mean)/gsea_z_score$sd
+  gsea_z_score$rand_z_score = (gsea_z_score$GSVArandscore - gsea_z_score$mean)/gsea_z_score$sd
+  #classDrugs = data.frame(target=names(cmpdSets))
+  tmp = lapply(cmpdSets,function(x){
+    paste(x,collapse= '; ')
+  })
+  classDrugs <- data.frame(target = names(tmp),drugs = matrix(unlist(tmp), nrow=length(tmp), byrow=T))
+  gsea_z_score = gsea_z_score %>% left_join(classDrugs,by='target') %>% arrange(desc(z_score))
+  write.csv(gsea_z_score,paste0(enrichFolder.n,'gsea_z_score.csv'))
+  return(gsea_z_score)  
+  
 }
 
 
@@ -1064,211 +1107,211 @@ diffExp <- function(case_id='',control_id='',expSet=dz_expr,
 #   return(res)
 # }
 ####### diffExp #######
-diffExp_v1 <- function(case_id='',control_id='',expSet=dz_expr,
-                    normalize_samples=T,
-                    k=1,
-                    n_topGenes=10000,
-                    DE_method='edgeR'){
-  require(dplyr)
-  require(RUVSeq)
-  require(edgeR)
-  counts_phenotype <- rbind(data.frame(sample = case_id,sample_type = 'case'),
-                            data.frame(sample = control_id, sample_type = 'control'))
-  counts = expSet[,as.character(counts_phenotype$sample)]
-  counts = 2^counts - 1 #unlog the counts it was log(2x + 1) in dz.expr.log2.readCounts
-  counts_phenotype$sample = as.character(counts_phenotype$sample)
-  counts_phenotype$sample_type = factor(counts_phenotype$sample_type, levels = c("control", "case"))
-  highExpGenes <- remLowExpr(counts,counts_phenotype)
-  counts = counts[highExpGenes,]
-  set <- newSeqExpressionSet(round(counts),
-                             phenoData = data.frame(counts_phenotype,row.names=counts_phenotype$sample))
-  design <- model.matrix(~ sample_type, data = pData(set))
-  y <- DGEList(counts=counts(set), group =  counts_phenotype$sample)
-  y <- calcNormFactors(y, method="TMM") #upperquartile generate Inf in the LGG case
-  y <- estimateGLMCommonDisp(y, design)
-  y <- estimateGLMTagwiseDisp(y, design)
-  fit <- glmFit(y, design)
-  lrt <- glmLRT(fit,2) #defaults to compare case control
-  
-  #counts dataframe === remove low counts ===> set === normalized ===> set1
-  #if no empirical genes found it will just create a matrix without running RUVg
-  if(normalize_samples == T){
-    top <- topTags(lrt, n=nrow(set))$table
-    i = which(!(rownames(set) %in% rownames(top)[1:min(n_topGenes,dim(top)[1])]))
-    empirical <- rownames(set)[i]
-    stopifnot(length(empirical)>0)
-    write.csv(data.frame(empirical),file=paste0(outputFolder,"computedEmpGenes.csv"))
-    set1 <- RUVg(set,empirical,k=k)
-    
-    print('computing DE via edgeR')
-    
-    #construct model matrix based on whether there was normalization ran
-    if(normalize_samples == T){
-      if(k==1){
-        design <- model.matrix(~sample_type + W_1, data=pData(set1))
-      }else if(k == 2){
-        design <- model.matrix(~sample_type + W_1 + W_2, data = pData(set1))
-      }else if (k == 3){
-        design <- model.matrix(~sample_type + W_1 + W_2 + W_3, data = pData(set1))
-      }
-    }else{design <- model.matrix(~sample_type,data=pData(set1))}
-    
-    dgList <- DGEList(counts=counts(set1),group=set1$sample_type)
-    dgList <- calcNormFactors(dgList, method="TMM") #using upperquartile seems to give issue for LGG
-    dgList <- estimateGLMCommonDisp(dgList, design)
-    dgList <- estimateGLMTagwiseDisp(dgList, design)
-    fit <- glmFit(dgList, design)
-    
-    #see edgeRUsersGuide section on testing for DE genes for contrast
-    lrt <- glmLRT(fit,2) 
-    #second coefficient otherwise it'll default the W_1 term when normalize is on
-  }
-  res <- lrt$table
-  colnames(res) <- c("log2FoldChange", "logCPM", "LR", "pvalue")
-  res$padj <- p.adjust(res$pvalue)
-  res$identifier <- row.names(res)
-  res = res %>% select(identifier,everything())
-  return(res)
-}
+# diffExp_v1 <- function(case_id='',control_id='',expSet=dz_expr,
+#                     normalize_samples=T,
+#                     k=1,
+#                     n_topGenes=10000,
+#                     DE_method='edgeR'){
+#   require(dplyr)
+#   require(RUVSeq)
+#   require(edgeR)
+#   counts_phenotype <- rbind(data.frame(sample = case_id,sample_type = 'case'),
+#                             data.frame(sample = control_id, sample_type = 'control'))
+#   counts = expSet[,as.character(counts_phenotype$sample)]
+#   counts = 2^counts - 1 #unlog the counts it was log(2x + 1) in dz.expr.log2.readCounts
+#   counts_phenotype$sample = as.character(counts_phenotype$sample)
+#   counts_phenotype$sample_type = factor(counts_phenotype$sample_type, levels = c("control", "case"))
+#   highExpGenes <- remLowExpr(counts,counts_phenotype)
+#   counts = counts[highExpGenes,]
+#   set <- newSeqExpressionSet(round(counts),
+#                              phenoData = data.frame(counts_phenotype,row.names=counts_phenotype$sample))
+#   design <- model.matrix(~ sample_type, data = pData(set))
+#   y <- DGEList(counts=counts(set), group =  counts_phenotype$sample)
+#   y <- calcNormFactors(y, method="TMM") #upperquartile generate Inf in the LGG case
+#   y <- estimateGLMCommonDisp(y, design)
+#   y <- estimateGLMTagwiseDisp(y, design)
+#   fit <- glmFit(y, design)
+#   lrt <- glmLRT(fit,2) #defaults to compare case control
+#   
+#   #counts dataframe === remove low counts ===> set === normalized ===> set1
+#   #if no empirical genes found it will just create a matrix without running RUVg
+#   if(normalize_samples == T){
+#     top <- topTags(lrt, n=nrow(set))$table
+#     i = which(!(rownames(set) %in% rownames(top)[1:min(n_topGenes,dim(top)[1])]))
+#     empirical <- rownames(set)[i]
+#     stopifnot(length(empirical)>0)
+#     write.csv(data.frame(empirical),file=paste0(outputFolder,"computedEmpGenes.csv"))
+#     set1 <- RUVg(set,empirical,k=k)
+#     
+#     print('computing DE via edgeR')
+#     
+#     #construct model matrix based on whether there was normalization ran
+#     if(normalize_samples == T){
+#       if(k==1){
+#         design <- model.matrix(~sample_type + W_1, data=pData(set1))
+#       }else if(k == 2){
+#         design <- model.matrix(~sample_type + W_1 + W_2, data = pData(set1))
+#       }else if (k == 3){
+#         design <- model.matrix(~sample_type + W_1 + W_2 + W_3, data = pData(set1))
+#       }
+#     }else{design <- model.matrix(~sample_type,data=pData(set1))}
+#     
+#     dgList <- DGEList(counts=counts(set1),group=set1$sample_type)
+#     dgList <- calcNormFactors(dgList, method="TMM") #using upperquartile seems to give issue for LGG
+#     dgList <- estimateGLMCommonDisp(dgList, design)
+#     dgList <- estimateGLMTagwiseDisp(dgList, design)
+#     fit <- glmFit(dgList, design)
+#     
+#     #see edgeRUsersGuide section on testing for DE genes for contrast
+#     lrt <- glmLRT(fit,2) 
+#     #second coefficient otherwise it'll default the W_1 term when normalize is on
+#   }
+#   res <- lrt$table
+#   colnames(res) <- c("log2FoldChange", "logCPM", "LR", "pvalue")
+#   res$padj <- p.adjust(res$pvalue)
+#   res$identifier <- row.names(res)
+#   res = res %>% select(identifier,everything())
+#   return(res)
+# }
 
 # new one with limma & DESeq2
 # note: normalize_samples only works with edgeR right now.
-diffExp_v2 <- function(case_id='',control_id='',expSet=dz_expr,
-                      normalize_samples=T,
-                      k=1,
-                      n_topGenes=10000,
-                      DE_method='edgeR',
-                      parallel_cores = 2){
-  require(dplyr)
-  require(RUVSeq)
-  require(edgeR)
-  counts_phenotype <- rbind(data.frame(sample = case_id,sample_type = 'case'),
-                            data.frame(sample = control_id, sample_type = 'control'))
-  counts = expSet[,as.character(counts_phenotype$sample)]
-  counts = 2^counts - 1 #unlog the counts it was log(2x + 1) in dz.expr.log2.readCounts
-  counts_phenotype$sample = as.character(counts_phenotype$sample)
-  counts_phenotype$sample_type = factor(counts_phenotype$sample_type, levels = c("control", "case"))
-  highExpGenes <- remLowExpr(counts,counts_phenotype)
-  counts = counts[highExpGenes,]
-  orderSeq = colnames(counts)
-  orderSeq2 = counts_phenotype$sample
-  counts_phenotype = counts_phenotype %>% filter(sample==orderSeq)
-  
-  if(DE_method=='DESeq2'){
-    library('DESeq2')
-    print('computing DE via DESeq')
-    row.names(counts_phenotype) = counts_phenotype$sample
-    coldata = counts_phenotype
-    dds <- DESeqDataSetFromMatrix(countData = round(counts),
-                                  colData = coldata,
-                                  design= ~ sample_type)
-    gc()
-    if (parallel_cores > 1){
-      dds <- DESeq(dds, parallel = T)
-    }else{
-      dds <- DESeq(dds)
-    }
-    
-    #save(dds,file= paste0(outputFolder, "/dds", ".RData"))
-    rnms <- resultsNames(dds)
-    
-    resRaw <- results(dds, contrast=c("sample_type","case","control"))
-    res = data.frame(resRaw)
-    res$identifier <- row.names(res)
-    res = res %>% select(identifier,everything())
-    return(res)
-    
-  }else if(DE_method=='edgeR'){
-    set <- newSeqExpressionSet(round(counts),
-                               phenoData = data.frame(counts_phenotype,row.names=counts_phenotype$sample))
-    design <- model.matrix(~ sample_type, data = pData(set))
-    y <- DGEList(counts=counts(set), group =  counts_phenotype$sample)
-    y <- calcNormFactors(y, method="TMM") #upperquartile generate Inf in the LGG case
-    y <- estimateGLMCommonDisp(y, design)
-    y <- estimateGLMTagwiseDisp(y, design)
-    fit <- glmFit(y, design)
-    lrt <- glmLRT(fit,2) #defaults to compare case control
-    
-    #counts dataframe === remove low counts ===> set === normalized ===> set1
-    #if no empirical genes found it will just create a matrix without running RUVg
-    if(normalize_samples == T){
-      top <- topTags(lrt, n=nrow(set))$table
-      i = which(!(rownames(set) %in% rownames(top)[1:min(n_topGenes,dim(top)[1])]))
-      empirical <- rownames(set)[i]
-      stopifnot(length(empirical)>0)
-      write.csv(data.frame(empirical),file=paste0(outputFolder,"computedEmpGenes.csv"))
-      set1 <- RUVg(set,empirical,k=k)
-      
-      print('computing DE via edgeR')
-      
-      #construct model matrix based on whether there was normalization ran
-      if(normalize_samples == T){
-        if(k==1){
-          design <- model.matrix(~sample_type + W_1, data=pData(set1))
-        }else if(k == 2){
-          design <- model.matrix(~sample_type + W_1 + W_2, data = pData(set1))
-        }else if (k == 3){
-          design <- model.matrix(~sample_type + W_1 + W_2 + W_3, data = pData(set1))
-        }
-      }else{design <- model.matrix(~sample_type,data=pData(set1))}
-      
-      dgList <- DGEList(counts=counts(set1),group=set1$sample_type)
-      dgList <- calcNormFactors(dgList, method="TMM") #using upperquartile seems to give issue for LGG
-      dgList <- estimateGLMCommonDisp(dgList, design)
-      dgList <- estimateGLMTagwiseDisp(dgList, design)
-      fit <- glmFit(dgList, design)
-      
-      #see edgeRUsersGuide section on testing for DE genes for contrast
-      lrt <- glmLRT(fit,2) 
-      #second coefficient otherwise it'll default the W_1 term when normalize is on
-    }
-    res <- lrt$table
-    colnames(res) <- c("log2FoldChange", "logCPM", "LR", "pvalue")
-    res$padj <- p.adjust(res$pvalue)
-    res$identifier <- row.names(res)
-    res = res %>% select(identifier,everything())
-    return(res)
-  }else if(DE_method=='limma'){
-    print('computing DE via limma')
-    require('Glimma')
-    x <- counts
-    nsamples <- ncol(x)
-    lcpm <- cpm(x, log=TRUE)
-    
-    group <-counts_phenotype$sample_type
-    
-    ## ----design-----------------------------------------------------------------------------
-    design <- model.matrix(~0 + group)
-    colnames(design) <- gsub("group", "", colnames(design))
-    
-    contr.matrix <- makeContrasts(
-      TumorvsNon = case - control, 
-      levels = colnames(design))
-    
-    v <- voom(x, design, plot=F)
-    vfit <- lmFit(v, design)
-    vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
-    efit <- eBayes(vfit)
-    #plotSA(efit, main="Final model: Mean−variance trend")
-    
-    tfit <- treat(vfit, lfc=1)
-    dt <- decideTests(tfit)
-    summary(dt)
-    
-    tumorvsnormal <- topTreat(tfit, coef=1, n=Inf)
-    tumorvsnormal <- tumorvsnormal[order(abs(tumorvsnormal$logFC), decreasing = T),]
-    #tumorvsnormal.topgenes <- rownames(tumorvsnormal[1:50,])
-    
-    
-    res <-tumorvsnormal
-    colnames(res) <-c("log2FoldChange", "AveExpr", "t", "pvalue", "padj")
-    res$identifier = row.names(res)
-    return(res)
-  }
-  
-  
-  
-}
+# diffExp_v2 <- function(case_id='',control_id='',expSet=dz_expr,
+#                       normalize_samples=T,
+#                       k=1,
+#                       n_topGenes=10000,
+#                       DE_method='edgeR',
+#                       parallel_cores = 2){
+#   require(dplyr)
+#   require(RUVSeq)
+#   require(edgeR)
+#   counts_phenotype <- rbind(data.frame(sample = case_id,sample_type = 'case'),
+#                             data.frame(sample = control_id, sample_type = 'control'))
+#   counts = expSet[,as.character(counts_phenotype$sample)]
+#   counts = 2^counts - 1 #unlog the counts it was log(2x + 1) in dz.expr.log2.readCounts
+#   counts_phenotype$sample = as.character(counts_phenotype$sample)
+#   counts_phenotype$sample_type = factor(counts_phenotype$sample_type, levels = c("control", "case"))
+#   highExpGenes <- remLowExpr(counts,counts_phenotype)
+#   counts = counts[highExpGenes,]
+#   orderSeq = colnames(counts)
+#   orderSeq2 = counts_phenotype$sample
+#   counts_phenotype = counts_phenotype %>% filter(sample==orderSeq)
+#   
+#   if(DE_method=='DESeq2'){
+#     library('DESeq2')
+#     print('computing DE via DESeq')
+#     row.names(counts_phenotype) = counts_phenotype$sample
+#     coldata = counts_phenotype
+#     dds <- DESeqDataSetFromMatrix(countData = round(counts),
+#                                   colData = coldata,
+#                                   design= ~ sample_type)
+#     gc()
+#     if (parallel_cores > 1){
+#       dds <- DESeq(dds, parallel = T)
+#     }else{
+#       dds <- DESeq(dds)
+#     }
+#     
+#     #save(dds,file= paste0(outputFolder, "/dds", ".RData"))
+#     rnms <- resultsNames(dds)
+#     
+#     resRaw <- results(dds, contrast=c("sample_type","case","control"))
+#     res = data.frame(resRaw)
+#     res$identifier <- row.names(res)
+#     res = res %>% select(identifier,everything())
+#     return(res)
+#     
+#   }else if(DE_method=='edgeR'){
+#     set <- newSeqExpressionSet(round(counts),
+#                                phenoData = data.frame(counts_phenotype,row.names=counts_phenotype$sample))
+#     design <- model.matrix(~ sample_type, data = pData(set))
+#     y <- DGEList(counts=counts(set), group =  counts_phenotype$sample)
+#     y <- calcNormFactors(y, method="TMM") #upperquartile generate Inf in the LGG case
+#     y <- estimateGLMCommonDisp(y, design)
+#     y <- estimateGLMTagwiseDisp(y, design)
+#     fit <- glmFit(y, design)
+#     lrt <- glmLRT(fit,2) #defaults to compare case control
+#     
+#     #counts dataframe === remove low counts ===> set === normalized ===> set1
+#     #if no empirical genes found it will just create a matrix without running RUVg
+#     if(normalize_samples == T){
+#       top <- topTags(lrt, n=nrow(set))$table
+#       i = which(!(rownames(set) %in% rownames(top)[1:min(n_topGenes,dim(top)[1])]))
+#       empirical <- rownames(set)[i]
+#       stopifnot(length(empirical)>0)
+#       write.csv(data.frame(empirical),file=paste0(outputFolder,"computedEmpGenes.csv"))
+#       set1 <- RUVg(set,empirical,k=k)
+#       
+#       print('computing DE via edgeR')
+#       
+#       #construct model matrix based on whether there was normalization ran
+#       if(normalize_samples == T){
+#         if(k==1){
+#           design <- model.matrix(~sample_type + W_1, data=pData(set1))
+#         }else if(k == 2){
+#           design <- model.matrix(~sample_type + W_1 + W_2, data = pData(set1))
+#         }else if (k == 3){
+#           design <- model.matrix(~sample_type + W_1 + W_2 + W_3, data = pData(set1))
+#         }
+#       }else{design <- model.matrix(~sample_type,data=pData(set1))}
+#       
+#       dgList <- DGEList(counts=counts(set1),group=set1$sample_type)
+#       dgList <- calcNormFactors(dgList, method="TMM") #using upperquartile seems to give issue for LGG
+#       dgList <- estimateGLMCommonDisp(dgList, design)
+#       dgList <- estimateGLMTagwiseDisp(dgList, design)
+#       fit <- glmFit(dgList, design)
+#       
+#       #see edgeRUsersGuide section on testing for DE genes for contrast
+#       lrt <- glmLRT(fit,2) 
+#       #second coefficient otherwise it'll default the W_1 term when normalize is on
+#     }
+#     res <- lrt$table
+#     colnames(res) <- c("log2FoldChange", "logCPM", "LR", "pvalue")
+#     res$padj <- p.adjust(res$pvalue)
+#     res$identifier <- row.names(res)
+#     res = res %>% select(identifier,everything())
+#     return(res)
+#   }else if(DE_method=='limma'){
+#     print('computing DE via limma')
+#     require('Glimma')
+#     x <- counts
+#     nsamples <- ncol(x)
+#     lcpm <- cpm(x, log=TRUE)
+#     
+#     group <-counts_phenotype$sample_type
+#     
+#     ## ----design-----------------------------------------------------------------------------
+#     design <- model.matrix(~0 + group)
+#     colnames(design) <- gsub("group", "", colnames(design))
+#     
+#     contr.matrix <- makeContrasts(
+#       TumorvsNon = case - control, 
+#       levels = colnames(design))
+#     
+#     v <- voom(x, design, plot=F)
+#     vfit <- lmFit(v, design)
+#     vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
+#     efit <- eBayes(vfit)
+#     #plotSA(efit, main="Final model: Mean−variance trend")
+#     
+#     tfit <- treat(vfit, lfc=1)
+#     dt <- decideTests(tfit)
+#     summary(dt)
+#     
+#     tumorvsnormal <- topTreat(tfit, coef=1, n=Inf)
+#     tumorvsnormal <- tumorvsnormal[order(abs(tumorvsnormal$logFC), decreasing = T),]
+#     #tumorvsnormal.topgenes <- rownames(tumorvsnormal[1:50,])
+#     
+#     
+#     res <-tumorvsnormal
+#     colnames(res) <-c("log2FoldChange", "AveExpr", "t", "pvalue", "padj")
+#     res$identifier = row.names(res)
+#     return(res)
+#   }
+#   
+#   
+#   
+# }
 
 
 ####### geneEnrich #######
@@ -1773,7 +1816,7 @@ prepare_rdfhs <- function(dataFolder){
 
 
 visualize_dz_sig_pathway <- function(res){
-  geneEnrich(dz_signature = dz_signature)
+  geneEnrich(dz_signature = res)
   require(ggplot2)
   down.gene.res = read.csv(paste0(outputFolder,'enrichment_analysis/GeneEnrichment/dz_down_sig_genes_enriched.csv'),stringsAsFactors = F)
   up.gene.res = read.csv(paste0(outputFolder,'enrichment_analysis/GeneEnrichment/dz_up_sig_genes_enriched.csv'),stringsAsFactors = F)
