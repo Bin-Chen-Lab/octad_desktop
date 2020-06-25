@@ -1,3 +1,7 @@
+#octad_desktop is replacing by the R package octad, which can be accessed through the following URLs
+#http://octad.org/download
+#https://www.synapse.org/#!Synapse:syn22101254/files/
+
 # octad_desktop
 Creators: 
 <ul>
@@ -48,13 +52,5 @@ https://www.gastrojournal.org/article/S0016-5085(17)30264-0/abstract
 http://www.dahshu.org/events/JournalClub/BinChen_Sep26_BigDataAnalytics.pdf
 
 
-## Tasks:
-- [x] Finish code updates as of 02/20/19
-- [ ] Finalize manuscript
-- [x] Finalize octad.org
-- [x] Precompute 10k random ssGSEA scores (17k!)
-- [x] Deprecate Diff.Exp.R in favor of diffexp() in core_functions.R
-- [x] Edit parameter chunk with Billy's optimization code
-- [ ] Network analysis (Billy, Ben, Patrick)
 
 
