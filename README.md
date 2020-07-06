@@ -14,9 +14,9 @@ Creators:
 Web version: octad.org
 
 # Requisite data files can be downloaded here:
-https://s3-us-west-2.amazonaws.com/chenlab-data-public/octad
+
 In the parent folder for this pipeline, create a folder named "data". Place all files from this download into this data folder.
-<ul>
+to download the files, using the url prefix (https://s3-us-west-2.amazonaws.com/chenlab-data-public/octad) followed by file name. For example, https://s3-us-west-2.amazonaws.com/chenlab-data-public/octad/metadata.RData
 Files: 
 <li>metadata.RData</li>
 <li>CCLE_OCTAD.RData</li>
