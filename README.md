@@ -56,9 +56,9 @@ The several examples listed in the file [octad_example.R](https://github.com/Bin
 
 
 # Contacts and citation
-If you use our work, please cite us: https://www.biorxiv.org/content/10.1101/821546v1
-OCTAD pipeline was developed by Bin Chen laboratory.
-Examples and questions can be addressed to Evgenii Chekalin, PhD, chekali1@msu.edu or Bin Chen, PhD, PI, bin.chen@hc.msu.edu
+If you use our work, please cite  
+[us OCTAD pipeline](https://www.biorxiv.org/content/10.1101/821546v1) was developed by [Bin Chen laboratory](http://binchenlab.org/).
+Examples and questions can be addressed to Eugene Chekalin, PhD, chekali1@msu.edu or Bin Chen, PhD, PI, bin.chen@hc.msu.edu
 
 
 Pipeline for Open Cancer TherApeutic Discovery. Based on paper by Bin Chen, PhD using public data to repurpose drugs for Liver cancers.
