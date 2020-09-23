@@ -23,15 +23,20 @@ if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
 }
 ```
 
-Next, install the octad.db, package with all required files for computation acalilable via link [octad.db](https://chenlab-data-public.s3.amazonaws.com/octad/octad.db_0.99.0.tar.gz%3Fdl%3D0)
+Next, install the octad.db, package with all required files for computation acalilable via link  [octad.db](https://chenlab-data-public.s3.amazonaws.com/octad/octad.db_0.99.0.tar.gz%3Fdl%3D0)
 ```
 install.packages("octad.db_0.99.0.tar", repos = NULL, type="source")
 ```
+Or without downloading the distributive:
+```
+install.packages("https://chenlab-data-public.s3.amazonaws.com/octad/octad.db_0.99.0.tar.gz%3Fdl%3D0",
+                 method="libcurl",repos=NULL,type="source")
+```
+It takes a few minutes to install the package and verify files. Afterward, the pipeline will be ready to run. 
 Finally, install the package:
 ```
 devtools::install_github('Bin-Chen-Lab/octad_desktop')
 ```
-It takes a few minutes to install the package and verify files. Afterward, the pipeline will be ready to run. 
 
 # Additional data
 By default, octad package uses expression data for 978 genes from the LINCS dataset. However, it can influence the result and we advice using whole octad database. To obtatin whole results for DE, downloading of the additional OCTAD database [octad.counts.and.tpm.h5](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5) from the AWS link is required.
