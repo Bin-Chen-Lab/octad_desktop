@@ -34,12 +34,11 @@ devtools::install_github('Bin-Chen-Lab/octad_desktop')
 It takes a few minutes to install the package and verify files. Afterward, the pipeline will be ready to run. 
 
 # Additional data and tutorials
-<li>By default, octad package uses expression data for 978 genes from the LINCS dataset. However, it can influence the result and we advice using whole octad database. To obtatin whole results for DE, downloading of the additional OCTAD database octad.counts.and.tpm.h5 from the AWS link is required:
-[Whole octad dataset](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5)</li> 
+<li>By default, octad package uses expression data for 978 genes from the LINCS dataset. However, it can influence the result and we advice using whole octad database. To obtatin whole results for DE, downloading of the additional OCTAD database [octad.counts.and.tpm.h5](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5) from the AWS link is required.</li> 
 <li>The tutorial available via following link:
-[Octad tutorial](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad_tutorial.pdf)</li> 
+[Tutorial](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad_tutorial.pdf)</li> 
 
-# Example
+# Usage and examples
 The several examples listed in the file [octad_example.R](https://github.com/Bin-Chen-Lab/octad_desktop/blob/master/octad_example.R):
 <li>Example 1. liver hepatocellular carcinoma vs adjacent reference tissues;</li> 
 <li>Example 2. breast cancer invasive carcinoma with PIK3 mutation vs reference tissues;</li> 
