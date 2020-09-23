@@ -1,21 +1,85 @@
+# Web version: http://octad.org/
 
-# TEST 
-#octad_desktop is replacing by the R package octad, which can be accessed through the following URLs
-#http://octad.org/download
-#https://www.synapse.org/#!Synapse:syn22101254/files/
+# How to Install
+Before library installation install required Bioconductor and CRAN packages through this code:
+```r
+bioconductor_packages=c('edgeR','RUVSeq','DESeq2','limma','rhdf5','artMS')
 
-# octad package
-Creators: 
-<ul>
-<li>Evgenii Chekalin, PhD. MSU. Leading developer. contact chekali1@msu.edu</li>
-<li>Bin Chen, PhD. MSU. Principal Investigator. contact: Bin.Chen@hc.msu.edu</li>
-<li>William Zeng. MD Candidate. UCSF. Developer. contact: billy.zeng@ucsf.edu</li>
-<li>Patrick Newbury, MD. co-developer. contact: patrick.newbury@hc.msu.edu</li>
-<li>Ke Liu, PhD. co-developer. contact: ke.liu@hc.msu.edu</li>
-<li>Support: Jing Xing, PhD, MSU. Package tester. contact: xingjin1@msu.edu</li>
-<li>Support: Dimitri Joseph, DO/PhD, MSU. Package tester. contact: josephd9@msu.edu</li>
-<li>Support: Anita Wen. Package tester contact: anwen@ucdavis.edu</li>
-</ul>
+#For R version 3.5> use BiocManager to install required bioconductor packages: 
+if (length(setdiff(bioconductor_packages, rownames(installed.packages()))) > 0) {
+  if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+  BiocManager::install(setdiff(bioconductor_packages, rownames(installed.packages())))
+}
+
+#For R version <3.5 use the BiocInstaller to install required bioconductor packages: 
+source("https://bioconductor.org/biocLite.R")
+BiocInstaller::biocLite(bioconductor_packages)
+
+packages=c('magrittr','dplyr','ggplot2','doParallel','foreach','lme4','Rfast','httr')
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))  
+}
+```
+
+Next, install the octad.db, package with all required files for computation acalilable via link [octad.db](https://chenlab-data-public.s3.amazonaws.com/octad/octad.db_0.99.0.tar.gz%3Fdl%3D0)
+```
+install.packages("octad.db_0.99.0.tar", repos = NULL, type="source")
+```
+Finally, install the package:
+```
+devtools::install_github('Bin-Chen-Lab/octad_desktop')
+```
+It takes a few minutes to install the package and verify files. Afterward, the pipeline will be ready to run. 
+
+# Additional data and tutorials
+By default, octad package uses expression data for 978 genes from the LINCS datased. However, it can influence the result and we advice using whole octad database. Whole octad database contains expression information for over 60 000 transcrips for all samples from the octad dataset. The dataset is available via link:
+[Whole octad dataset](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5)
+The tutorial available via following link:
+[Octad tutorial](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad_tutorial.pdf)
+
+# Example
+The several examples listed in the file octad_example.R:
+<li>Example 1. liver hepatocellular carcinoma vs adjacent reference tissues;</li> 
+<li>Example 2. breast cancer invasive carcinoma with PIK3 mutation vs reference tissues;</li> 
+<li>Example 3. lung adenocarcinoma with amplified MYC gene vs reference tissues;</li> 
+<li>Example 4. Primary breast cancer invasive carcinoma vs metastatic breast cancer invasive carcinoma using only 978 genes expression data for DE;</li> 
+<li>Example 5. Compute sRGES score using GEO obtained dataset</li> 
+
+
+
+
+
+
+
+
+
+
+
+# Overview
+Several typical usages of the pipeline are sourced in the octad_examples.R, where users can run drug prediction for hepatocellular carcinoma, PI3KCA mutated breast invasive carcinoma, lung adenocarcinoma with MYC amplification and comparison of the metastatic vs primary breast invasive carcinoma.
+
+To obtatin whole results for DE, downloading of the additional OCTAD database octad.counts.and.tpm.h5 from the AWS link is required:
+
+The dataset and code can be also accessed by the link: https://www.synapse.org/#!Synapse:syn22101254/files/
+https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5
+
+octad.counts.and.tpm.h5 contains expression of all transcripts, while octad.LINCS.h5, used as a default in this package, only contains expression of 978 genes profiled in the LINCS database.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Web version: http://octad.org/
 

@@ -1,3 +1,0 @@
--in “enriched_chembl_targets.csv”, the p value and p adj values are either 0 or 1, which is the only strange thing
--replace default samples picked in computereftissue by length(case_id)
--add stuff for Jing
