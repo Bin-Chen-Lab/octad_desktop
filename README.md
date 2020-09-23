@@ -1,17 +1,23 @@
+
+#TEST TEST TEST
 #octad_desktop is replacing by the R package octad, which can be accessed through the following URLs
 #http://octad.org/download
 #https://www.synapse.org/#!Synapse:syn22101254/files/
 
-# octad_desktop
+# octad package
 Creators: 
 <ul>
-<li>Bin Chen, PhD. MSU. contact: Bin.Chen@hc.msu.edu</li>
-<li>William Zeng. MD Candidate. UCSF. contact: billy.zeng@ucsf.edu</li>
-<li>Patrick Newbury, MD. contact: patrick.newbury@hc.msu.edu</li>
-<li>Support: Anita Wen</li>
+<li>Evgenii Chekalin, PhD. MSU. Leading developer. contact chekali1@msu.edu</li>
+<li>Bin Chen, PhD. MSU. Principal Investigator. contact: Bin.Chen@hc.msu.edu</li>
+<li>William Zeng. MD Candidate. UCSF. Developer. contact: billy.zeng@ucsf.edu</li>
+<li>Patrick Newbury, MD. co-developer. contact: patrick.newbury@hc.msu.edu</li>
+<li>Ke Liu, PhD. co-developer. contact: ke.liu@hc.msu.edu</li>
+<li>Support: Jing Xing, PhD, MSU. Package tester. contact: xingjin1@msu.edu</li>
+<li>Support: Dimitri Joseph, DO/PhD, MSU. Package tester. contact: josephd9@msu.edu</li>
+<li>Support: Anita Wen. Package tester contact: anwen@ucdavis.edu</li>
 </ul>
 
-Web version: octad.org
+Web version: http://octad.org/
 
 # Requisite data files can be downloaded here:
 
@@ -46,7 +52,7 @@ Files:
 # Citation
 If you use our work, please cite us.
 
-Pipeline for Open Cancer TherApeutic Discovery. Based on paper by Bin Chen, Phd using public data to repurpose drugs for Liver cancers.
+Pipeline for Open Cancer TherApeutic Discovery. Based on paper by Bin Chen, PhD using public data to repurpose drugs for Liver cancers.
 https://www.nature.com/articles/ncomms16022
 https://www.gastrojournal.org/article/S0016-5085(17)30264-0/abstract
 http://www.dahshu.org/events/JournalClub/BinChen_Sep26_BigDataAnalytics.pdf
