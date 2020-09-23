@@ -38,7 +38,7 @@ It takes a few minutes to install the package and verify files. Afterward, the p
 <li>The tutorial available via following link:
 [Tutorial](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad_tutorial.pdf) </li> 
 
-# Usage and examples
+# Usage and examples Q#@!#!@#
 The several examples listed in the file [octad_example.R](https://github.com/Bin-Chen-Lab/octad_desktop/blob/master/octad_example.R) :
 <li>Example 1. liver hepatocellular carcinoma vs adjacent reference tissues;</li> 
 <li>Example 2. breast cancer invasive carcinoma with PIK3 mutation vs reference tissues;</li> 
