@@ -1,5 +1,5 @@
 
-#TEST TEST TEST
+# TEST 
 #octad_desktop is replacing by the R package octad, which can be accessed through the following URLs
 #http://octad.org/download
 #https://www.synapse.org/#!Synapse:syn22101254/files/
@@ -49,8 +49,10 @@ Files:
   <li>deprecated: Old code and files kept for internal reference.</li>
 </ul>
 
-# Citation
-If you use our work, please cite us.
+# Contacts and citation
+If you use our work, please cite us: https://www.biorxiv.org/content/10.1101/821546v1
+OCTAD pipeline was developed by Bin Chen laboratory.
+
 
 Pipeline for Open Cancer TherApeutic Discovery. Based on paper by Bin Chen, PhD using public data to repurpose drugs for Liver cancers.
 https://www.nature.com/articles/ncomms16022
