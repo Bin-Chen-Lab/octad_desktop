@@ -1,0 +1,46 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# How to Install
+
+Before library installation install required Bioconductor and CRAN packages through this code:
+  
+```r
+bioconductor_packages=c('edgeR','RUVSeq','DESeq2','limma','rhdf5','artMS')
+
+#For R version 3.5> use BiocManager to install required bioconductor packages: 
+if (length(setdiff(bioconductor_packages, rownames(installed.packages()))) > 0) {
+  if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+  BiocManager::install(setdiff(bioconductor_packages, rownames(installed.packages())))
+}
+
+#For R version <3.5 use the BiocInstaller to install required bioconductor packages: 
+source("https://bioconductor.org/biocLite.R")
+BiocInstaller::biocLite(bioconductor_packages)
+
+packages=c('magrittr','dplyr','ggplot2','doParallel','foreach','lme4','Rfast','httr')
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))  
+}
+```
+
+After this you can install package from sourced tar.gz file:
+  
+```r
+install.packages("octad_1.0.tar.gz", repos = NULL, type="source")
+```
+It takes a few minutes to install the package and verify files. Afterward, the pipeline will be ready to run. 
+
+
+# Overview
+Several typical usages of the pipeline are sourced in the octad_examples.R, where users can run drug prediction for hepatocellular carcinoma, PI3KCA mutated breast invasive carcinoma, lung adenocarcinoma with MYC amplification and comparison of the metastatic vs primary breast invasive carcinoma.
+
+To obtatin whole results for DE, downloading of the additional OCTAD database octad.counts.and.tpm.h5 from the AWS link is required:
+
+The dataset and code can be also accessed by the link: https://www.synapse.org/#!Synapse:syn22101254/files/
+https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5
+
+octad.counts.and.tpm.h5 contains expression of all transcripts, while octad.LINCS.h5, used as a default in this package, only contains expression of 978 genes profiled in the LINCS database.
