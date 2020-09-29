@@ -31,12 +31,12 @@ geneEnrich=function(gene_list=NULL,database_list=NULL,output=FALSE){
 	
     #transform list to data.frame, rename columns and compute FDR since enlisted protocol does not gives it. WILL NOT WORK WO line 26-29 transformation!
     result_temp=data.frame(matrix(unlist(raw_return[[j]]), 
-                                  nrow=length(raw_return[[j]]), byrow=T)) 
+                                  nrow=length(raw_return[[j]]), byrow=TRUE)) 
     colnames(result_temp)= c('Rank', 'Term name', 'P-value', 'Z-score', 'Combined score', 'FDR', 'Old p-value', 'Old adjusted p-value')
     result_temp$genes=genes
 #    result_temp$FDR=p.adjust(result_temp$`P-value`,method='fdr')
     
-    if(output==T){ #write result to working directory
+    if(output==TRUE){ #write result to working directory
       write.csv(result_temp,file=paste0(j,'_GO_enrichment.csv'))
     }
     

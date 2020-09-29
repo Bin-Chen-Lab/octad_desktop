@@ -34,10 +34,9 @@ a vector of an appropriate set of control samples. Besides, if \code{output=TRUE
  #select cases
  case_id=HCC_primary$sample.id
  #computing reference tissue, by default using small autoEncoder, but can use custom expression set,
- #by default output=T and outputFolder option is empty, 
+ #by default output=T and outputFolder option is empty,
  #which creates control corMatrix.csv to working directory
- #control_id=computeRefTissue(case_id,outputFolder='',output=T,
- expSet = "octad",control_size = 50)
+ control_id=computeRefTissue(case_id,outputFolder='',output=T, expSet = "octad",control_size = 50)
  #increase number of samples
  control_id=computeRefTissue(case_id, control_size = 100)
  #the use adjacent normal tissue samples as control_id allow you to avoid running this function

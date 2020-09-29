@@ -2,8 +2,7 @@
 ####### topLineEval #######
 topLineEval <- function(topline = c(''),
                         mysRGES=''){
-  #topline can be single cell or multiple
-  #topline = c('2004','22RV1')
+
   require(octad.db)
   toplineName = paste(topline,collapse='_')
 #  require(plotly)
@@ -17,7 +16,7 @@ topLineEval <- function(topline = c(''),
   
 mysRGES$pert_iname <- toupper(mysRGES$pert_iname)
 CTRPv2.ic50 <- data.table::dcast.data.table(octad.db::CTRPv2.sensprof, drugid ~ cellid, value.var = "ic50_recomputed", fun.aggregate = median)
-#CTRPv2.ic50 <- replace(CTRPv2.ic50, is.na(CTRPv2.ic50), 0)
+
 colnames(CTRPv2.ic50) <- gsub("[^0-9A-Za-z///' ]","",colnames(CTRPv2.ic50))
 colnames(CTRPv2.ic50) <- toupper(colnames(CTRPv2.ic50))
 colnames(CTRPv2.ic50) <- gsub(" ","",colnames(CTRPv2.ic50))
@@ -28,8 +27,7 @@ CTRP.IC50=subset(CTRPv2.ic50,select=c('DRUGID',topline))
 ###
 
 ###
-#  CTRP.IC50.m = melt(CTRP.IC50,id.vars = 'DRUGID')
-#  CTRP.IC50.medianIC50 <- CTRP.IC50.m[,.(medIC50=median(value)), by=DRUGID]
+
 CTRP.IC50.m = as.data.frame(reshape2::melt(CTRP.IC50,id.vars = 'DRUGID'))
 CTRP.IC50.medianIC50=aggregate(CTRP.IC50.m[3],by=list(CTRP.IC50.m$DRUGID),FUN=median)
 CTRP.IC50.medianIC50$medIC50=CTRP.IC50.medianIC50$value
@@ -42,19 +40,16 @@ CTRP.IC50.medianIC50 <- CTRP.IC50.medianIC50[is.finite(CTRP.IC50.medianIC50$medI
   
   
 CTRPv2.auc   <- data.table::dcast.data.table(octad.db::CTRPv2.sensprof, drugid ~ cellid, value.var = "auc_recomputed", fun.aggregate = median)
-#CTRPv2.auc <- replace(CTRPv2.auc, is.na(CTRPv2.auc), 0)
+
 colnames(CTRPv2.auc) <- gsub("[^0-9A-Za-z///' ]","",colnames(CTRPv2.auc))
 colnames(CTRPv2.auc) <- toupper(colnames(CTRPv2.auc))
 colnames(CTRPv2.auc) <- gsub(" ","",colnames(CTRPv2.auc))
 ### 
-#  CTRP.auc   <- CTRPv2.auc[,c('DRUGID',..topline)]
 CTRPv2.auc=as.data.frame(CTRPv2.auc)
 CTRP.auc=subset(CTRPv2.auc,select=c('DRUGID',topline))  
 ###  
 
-###
-#  CTRP.auc.m = melt(CTRP.auc,id.vars = 'DRUGID')
-#  CTRP.auc.medianauc <- CTRP.auc.m[,.(medauc=median(value)), by=DRUGID]  
+###  
 CTRP.auc.m = as.data.frame(reshape2::melt(CTRP.auc,id.vars = 'DRUGID'))
 CTRP.auc.medianauc=aggregate(CTRP.auc.m[3],by=list(CTRP.auc.m$DRUGID),FUN=median)
 CTRP.auc.medianauc$medauc=CTRP.auc.medianauc$value
@@ -117,7 +112,7 @@ htmlwidgets::saveWidget(plotly::as_widget(ic50graph),
   # AUC
   testdf2 <- merge(mysRGES, CTRP.auc.medianauc, by.x = "pert_iname", by.y = "DRUGID")
   AUC.cortest <- cor.test(testdf2$sRGES,testdf2$medauc)
-  # plot(testdf2$sRGES, testdf2[,8],xlab = "sRGES",ylab=paste(topline,"AUC"), main = "Top Line recomputed AUC vs sRGES")
+
   
   testdf2$StronglyPredicted <- NA
   testdf2$StronglyPredicted <- ifelse(testdf2$sRGES < -0.2,"Yes","No")

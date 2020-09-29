@@ -10,15 +10,10 @@ cmap_score_ultimate=function (sig_up, sig_down, drug_signature)
 	drug_signature=rank(drug_signature)
 	up_tags_rank=drug_signature[as.vector(sig_up)]
 	down_tags_rank=drug_signature[as.vector(sig_down)]
-#    drug_signature[, 2] <- rank(drug_signature[, 2])
-#    up_tags_rank <- merge(drug_signature, sig_up, by.x = "ids",by.y = 1)
-#    down_tags_rank <- merge(drug_signature, sig_down, by.x = "ids", 
-#                            by.y = 1)
 
 up_tags_position=sort(up_tags_rank)
 down_tags_position=sort(down_tags_rank)
-#    up_tags_position <- sort(up_tags_rank$rank)
-#    down_tags_position <- sort(down_tags_rank$rank)
+
     num_tags_up <- length(up_tags_position)
     num_tags_down <- length(down_tags_position)
     if (num_tags_up > 1) {

@@ -175,7 +175,7 @@ dz_cmap_scores=apply(cmap_exp_sig[as.vector(sig.ids)],2,
     #random scores
 #    N_PERMUTATIONS <- 10000 #default 100000
 
-random_sig_ids <- sample(colnames(lincs_signatures),permutations,replace=T)
+random_sig_ids <- sample(colnames(lincs_signatures),permutations,replace=TRUE)
 #count <- 0
 random_cmap_scores <- NULL
 
@@ -183,8 +183,8 @@ cmap_exp_signature=as.data.frame(Rfast::colRanks(-1 * lincs_signatures[, as.char
 
 random_cmap_scores=apply(cmap_exp_signature,2,
                          FUN=function(x) cmap_score_ultimate(
-                           sample(1:length(dz_genes_up$Symbol),replace=T),
-                           sample(1:length(dz_genes_down$Symbol),replace=T),
+                           sample(1:length(dz_genes_up$Symbol),replace=TRUE),
+                           sample(1:length(dz_genes_down$Symbol),replace=TRUE),
                            drug_signature=x))
 
 #random_input_signature_genes <- sample(gene.list, (nrow(dz_genes_up)+nrow(dz_genes_down)))

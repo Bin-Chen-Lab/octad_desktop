@@ -1,14 +1,14 @@
 #' @export
 diffExp <- function(case_id='',control_id='',source='octad',file='octad.counts.and.tpm.h5',
-                    normalize_samples=T,
+                    normalize_samples=TRUE,
                     k=1,
 					expSet=NULL,
                     n_topGenes=500,
 					          n_varGenes=NULL,
                     DE_method='edgeR',
                     parallel_cores = 2,
-					output=T,
-					outputFolder='', annotate=T){
+					output=TRUE,
+					outputFolder='', annotate=TRUE){
 #  require(dplyr)
 #  require(RUVSeq)
 #  require(edgeR)
@@ -219,7 +219,7 @@ stop('Expression data not sourced, please, modify expSet option')
 #    return(res)
   }
 #load(merged_gene_info)
-if(annotate==T){
+if(annotate==TRUE){
 	merged_gene_info=octad.db::merged_gene_info
     merged_gene_info$ensembl<-as.vector(merged_gene_info$ensembl)
     merged_gene_info$V1=NULL #modify it when will have time

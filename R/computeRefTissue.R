@@ -11,7 +11,7 @@ computeRefTissue <- function(case_id = NULL,
                              control_size = length(case_id),
 							 outputFolder='',
                              cor_cutoff='0%', #greater or equal than the cutoff 
-                             output=T){
+                             output=TRUE){
 	 
 #  require(dplyr)
 require(octad.db)
@@ -57,20 +57,20 @@ normal_id=normal_id[normal_id%in%colnames(expSet)]
     expSet_case <- expSet[,as.vector(case_id)]
     #varGenes look at the top varying genes (IQR) within normal tissue expression and varies them to the case tissues
     iqr_gene <-apply(expSet_normal, 1, stats::IQR) #get the IQR per gene
-    varying_genes <-order(iqr_gene, decreasing=T)[1:min(n_varGenes,length(iqr_gene))]
+    varying_genes <-order(iqr_gene, decreasing=TRUE)[1:min(n_varGenes,length(iqr_gene))]
     
     #get the correlation matrix for each normal id and each case id
     normal_dz_cor <-cor(expSet_normal[varying_genes, ], expSet_case[varying_genes, ], method = "spearman")
     normal_dz_cor_each <-apply(normal_dz_cor, 1, median) #getting the median correlation btw each normal tissue to the case overall
     normal_dz_cor_eachDF = data.frame(cor=sort(normal_dz_cor_each, decreasing=TRUE)) %>% 
       dplyr::mutate(sample.id = row.names(.)) %>% dplyr::select(sample.id,cor)
-    cutoff = stats::quantile(normal_dz_cor_eachDF$cor,probs=seq(0,1,0.05),na.rm=T)[cor_cutoff]
+    cutoff = stats::quantile(normal_dz_cor_eachDF$cor,probs=seq(0,1,0.05),na.rm=TRUE)[cor_cutoff]
     GTEXid <- (normal_dz_cor_eachDF %>% 
                  dplyr::arrange(desc(cor)) %>% 
                  dplyr::filter(cor>=cutoff))$sample.id 
     GTEXid <- GTEXid[1:min(control_size,length(GTEXid))]
     
-    if(output==T){
+    if(output==TRUE){
 		if(nchar(outputFolder)>0){
 		  if (!dir.exists(outputFolder)) {
 			dir.create(outputFolder)
@@ -89,7 +89,7 @@ normal_id=normal_id[normal_id%in%colnames(expSet)]
     }}
     return(GTEXid)
   }
-    if(output==T){
+    if(output==TRUE){
 		if(nchar(outputFolder)>0){
 		  if (!dir.exists(outputFolder)) {
 			dir.create(outputFolder)
