@@ -1,5 +1,5 @@
 ---
-title: "octad"
+title: "Open Cancer TherApeutic Discovery (OCTAD)"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{octad}
@@ -13,9 +13,11 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-# 1. Overview.
-
-# 2. How to Install.
+# E. Chekalin, B. Zeng, P. Newbury, B. Glicksberg, J. Xing, K. Liu, D. Joseph, B. Chen
+## Edited September 28, 2020; Compiled: September 29, 2020
+# Overview
+As the field of precision medicine progresses, we start to tailor treatments for cancer patients classified not only by their clinical, but also by their molecular features. The emerging cancer subtypes defined by these features require dedicated resources to assist the discovery of drug candidates for preclinical evaluation. Voluminous cancer patient gene expression profiles have been accumulated in public databases, enabling the creation of a cancer-specific expression signature. Meanwhile, large-scale gene expression profiles of chemical compounds became available in recent years. By matching the cancer-specific expression signature to compound-induced gene expression profiles from large drug libraries, researchers can prioritize small molecules that present high potency to reverse expression of signature genes for further experimental testing of their efficacy. This approach has proven to be an efficient and cost-effective way to identify efficacious drug candidates. However, the success of this approach requires multiscale procedures, imposing significant challenges to many labs. Therefore, we present OCTAD (http://octad.org): an open workspace for virtually screening compounds targeting precise cancer patient groups using gene expression features. We have included 19,127 patient tissue samples covering 50 cancer types, and expression profiles for 12,442 distinct compounds. We streamline all the procedures including deep-learning based reference tissue selection, disease gene expression signature creation, drug reversal potency scoring, and in silico validation. We release OCTAD as a web portal and a standalone R package to allow experimental and computational scientists to easily navigate the tool. 
+# How to Install
 Before library installation install required Bioconductor and CRAN packages through this code:
 ```r
 bioconductor_packages=c('edgeR','RUVSeq','DESeq2','limma','rhdf5','artMS')
@@ -51,7 +53,7 @@ Finally, install the package:
 ```
 devtools::install_github('Bin-Chen-Lab/octad_desktop')
 ```
-# 3. Workflow.
+# Workflow
 We illustrate the utility of the desktop pipeline by highlighting a use-case for HCC: we provide code and data for investigating differential expression, pathway enrichment, drug prediction and hit selection, and in silico validation using an external dataset. In this workflow, we will select case tissue samples from our compiled TCGA data and compute control tissues from the GTEx data.Note that our compiled data also contains adjacent normal TCGA HCC samples which can also serve as control tissues. By default, the octad package uses Small OCTAD dataset containing expression values only for LINCS landmark genes required for sRGES score computation. To download the full expression values, please refer to the link with [octad.counts.and.tpm.h5](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5) to download the whole expression dataset. By default, computation results of the pipeline are stored in the working directory. 
 ```
 library(octad)
@@ -211,12 +213,12 @@ octadDrugEnrichment(sRGES = sRGES, target_type = c('chembl_targets','mesh','Chem
 ```
 This analysis provides much information for following candidate selection and experiment design. First, the candidates selected from the same enriched class (i.e., MeSH term, target) are more likely to be true positive than those randomly selected from the top list. Second, when the ideal candidate is not available, it is reasonable to choose an alternative from the same class. Sometimes, it is necessary to choose a new drug for testing (e.g., a second generation of one inhibitor for the same target). Lastly, since many compounds have multiple MOAs, this analysis would help interpret the MOA of promising compounds. 
 
-# 4. Web-version and citation.
+# Web-version and citation.
 Alternatively the database and the pipeline is available via website of the OCTAD project: http://octad.org/.
 If you use our work, please cite the [OCTAD paper](https://www.biorxiv.org/content/10.1101/821546v1). Both OCTAD package and website was developed by [Bin Chen laboratory](http://binchenlab.org/).
 octad package is github available via [link](https://github.com/Bin-Chen-Lab/octad_desktop)
 
-# 5. Session information.
+# Session information.
 Here is the output of `sessionInfo()` on the system on which this document was compiled:
 ```
 R version 4.0.2 (2020-06-22)
