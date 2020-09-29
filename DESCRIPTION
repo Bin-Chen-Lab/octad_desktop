@@ -32,7 +32,7 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Depends: 
-    R (>= 3.6.3),
+    R (>= 3.6),
     magrittr,
     dplyr,
     ggplot2,

@@ -17,7 +17,7 @@ if (length(setdiff(bioconductor_packages, rownames(installed.packages()))) > 0) 
 source("https://bioconductor.org/biocLite.R")
 BiocInstaller::biocLite(bioconductor_packages)
 
-packages=c('magrittr','dplyr','ggplot2','doParallel','foreach','lme4','Rfast','httr')
+packages=c('magrittr','dplyr','ggplot2','doParallel','foreach','lme4','Rfast','httr','data.table')
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
