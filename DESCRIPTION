@@ -48,4 +48,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-biocViews: Software
+biocViews: Classification, GeneExpression, Pharmacogenetics, Pharmacogenomics, Software
