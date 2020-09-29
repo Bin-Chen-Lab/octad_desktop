@@ -53,7 +53,7 @@ devtools::install_github('Bin-Chen-Lab/octad_desktop')
 ```
 # 3. Workflow.
 We illustrate the utility of the desktop pipeline by highlighting a use-case for HCC: we provide code and data for investigating differential expression, pathway enrichment, drug prediction and hit selection, and in silico validation using an external dataset. In this workflow, we will select case tissue samples from our compiled TCGA data and compute control tissues from the GTEx data.Note that our compiled data also contains adjacent normal TCGA HCC samples which can also serve as control tissues. By default, the octad package uses Small OCTAD dataset containing expression values only for LINCS landmark genes required for sRGES score computation. To download the full expression values, please refer to the link with [octad.counts.and.tpm.h5](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5) to download the whole expression dataset. By default, computation results of the pipeline are stored in the working directory. 
-```{r setup}
+```
 library(octad)
 ```
 ## Select case samples.
@@ -120,7 +120,8 @@ res=diffExp(case_id,control_id,source='octad.small',output=T)
 ```
 If it is need to use the whole OCTAD dataset from [octad.counts.and.tpm.h5](https://chenlab-data-public.s3-us-west-2.amazonaws.com/octad/octad.counts.and.tpm.h5) as input, make sure the required .h5 file is stored in the R working directory or the whole path to the file is specified:
 ```
-res=diffExp(case_id,control_id,source='octad.whole',output=T,n_topGenes=10000,file='octad.counts.and.tpm.h5')
+res=diffExp(case_id,control_id,source='octad.whole',
+    output=T,n_topGenes=10000,file='octad.counts.and.tpm.h5')
 ```
 We can also perform DE analysis using an external dataset. Below is an example to perform DE analysis between tumor and non-tumor samples using the count data downloaded from GEO [GSE144269](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE144269).
 
@@ -129,7 +130,8 @@ data=read.table('GSE144269_RSEM_GeneCounts.txt',header=T,row.names=1)
 samples=colnames(data) #define the case and control cohorts, A samples were obtained from tumors, B samples were obtained from adjacent tissue
 case_id=samples[grepl('A_S',samples)]
 control_id=samples[grepl('B_S',samples)]
-res=diffExp(case_id,control_id,source='side',output=T,n_topGenes=10000,expSet=log2(as.matrix(data)),annotate=F) #compute DE
+res=diffExp(case_id,control_id,source='side',output=T,n_topGenes=10000,
+    expSet=log2(as.matrix(data)),annotate=F) #compute DE
 ```
 The `diffExp` function will produce `data.frame` with DE results. Please, note, that option `annotate` is not required to be `TRUE`, but in this case annotation will be performed. If using custom expression matrix, please, make sure `expSet row.names` contain ENSG symbols that are used to assign gene names and gene descriptions. 
 ```
@@ -182,7 +184,8 @@ head(sRGES)
 As the pharmacogenomic database CTRPv2 consists of efficacy data of 481 drugs in 860 cancer cell lines 39,54, we may leverage this database for further in silico validation of our predictions, even without running any biological experiments. We use the HepG2 cell line to validate the prediction of HCC drugs. In our previous work, we’ve shown that RGES scores correlate with drug efficacy such as AUC or IC50.
 
 ```
-cell_line_computed=computeCellLine(case_id=case_id,returnDF=T,source='octad',file='octad.counts.and.tpm.h5')
+cell_line_computed=computeCellLine(case_id=case_id,
+                    returnDF=T,source='octad',file='octad.counts.and.tpm.h5')
 head(cell_line_computed)
           medcor
 HEPG2  0.4388177
@@ -191,10 +194,11 @@ COV644 0.2107736
 HS578T 0.2054412
 CL34   0.2028619
 SKBR3  0.2020225
-
-topLineEval(topline = c('HEPG2'),mysRGES = sRGES)
 ```
 `computeCellLine` will produce an object with correlation scores for every cell line and case samples (stored as CellLineCorrelations.csv). 
+```
+topLineEval(topline = c('HEPG2'),mysRGES = sRGES)
+```
 `topLineEval` will produce CellLineEval*_drug_sensitivity_insilico_results.txt and two .html documents:
 1. *_auc_insilico_validation.html (correlation between drug AUC in the specified cell line and sRGES)
 2. *_ic50_insilico_validation.html (correlation between drug IC50 in the specified cell line and sGRES)
