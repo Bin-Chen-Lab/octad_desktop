@@ -55,5 +55,7 @@ The several examples listed in the file [octad_example.R](https://github.com/Bin
 
 
 # Contacts and citation
-If you use our work, please cite the [OCTAD paper](https://www.biorxiv.org/content/10.1101/821546v1). Both OCTAD package and website was developed by [Bin Chen laboratory](http://binchenlab.org/).
+Both OCTAD package and website were developed by [Bin Chen laboratory](http://binchenlab.org/).
 Examples and questions can be addressed to Eugene Chekalin, PhD, chekali1@msu.edu or Bin Chen, PhD, PI, bin.chen@hc.msu.edu
+Cite:
+#Billy Zeng, #Benjamin S. Glicksberg, #Patrick Newbury, #Evgenii Chekalin, Jing Xing, Ke Liu, Anita Wen, Caven Chow, Bin Chen, OCTAD: an open workplace for virtually screening therapeutics targeting precise cancer patient groups using gene expression features, Nature Protocols, 2020, in press
